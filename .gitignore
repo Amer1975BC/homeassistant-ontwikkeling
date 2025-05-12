@@ -1,0 +1,15 @@
+# Home Assistant specifieke bestanden
+.storage/
+.cloud/
+__pycache__/
+*.db
+*.db-shm
+*.db-wal
+home-assistant.log*
+home-assistant_v2.db*
+deps/
+
+# Script specifieke bestanden
+.git_backup_temp/
+.github_token
+git_backup.log
