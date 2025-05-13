@@ -1,0 +1,53 @@
+esphome:
+  name: tuinhuis
+  friendly_name: tuiunhuis
+
+esp32:
+  board: esp32dev
+  framework:
+    type: arduino
+
+# Enable logging
+logger:
+
+# Enable Home Assistant API
+api:
+  encryption:
+    key: "tphEU6/35Uy9Pd5PDcWyExTta+gb7gwHpCWCfLezAuc="
+
+ota:
+  - platform: esphome
+    password: "cb4b4c9e3ebc59526b89472530ea3ace"
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+
+  # Enable fallback hotspot (captive portal) in case wifi connection fails
+  ap:
+    ssid: "Test Fallback Hotspot"
+    password: "u7xULZyirLK6"
+
+captive_portal:
+
+web_server:
+
+sensor:
+  - platform: dht
+    pin: GPIO21
+    model: DHT11
+    temperature:
+      name: "Temperatuur Schuur-achter"
+    humidity:
+      name: "Vochtigheidsgraad Schuur-achter"
+    update_interval: 60s
+
+  - platform: internal_temperature
+    name: "ESP32 module temperatuur"
+  
+binary_sensor:
+  - platform: gpio
+    pin: GPIO27
+    name: "PIR Sensor"
+    device_class: motion
+    

@@ -1,0 +1,32 @@
+esphome:
+  name: zolder-pir
+  friendly_name: Zolder-PIR
+
+esp32:
+  board: esp32dev
+  framework:
+    type: arduino
+
+# Enable logging
+logger:
+
+# Enable Home Assistant API
+api:
+  encryption:
+    key: "7ROTHvSv8kEx7K2WArh+kFs9LzkvpT+2Tm91vLekh2g="
+
+ota:
+  - platform: esphome
+    password: "b27dc0e35ea289c49129678ef3203f94"
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+
+  # Enable fallback hotspot (captive portal) in case wifi connection fails
+  ap:
+    ssid: "Zolder-Pir Fallback Hotspot"
+    password: "sbZY2Ebqqz0b"
+
+captive_portal:
+    

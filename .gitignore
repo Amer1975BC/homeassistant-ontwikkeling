@@ -1,0 +1,13 @@
+.cloud
+.storage
+__pycache__/
+deps/
+*.log
+*.log.*
+*.db
+*.db-shm
+*.db-wal
+home-assistant.log*
+home-assistant_v2.db*
+.DS_Store
+.aarlo/aarlo.pickle

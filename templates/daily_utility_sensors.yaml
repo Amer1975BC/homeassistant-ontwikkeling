@@ -1,0 +1,57 @@
+# Voorgestelde configuratie voor daily_utility_sensors.yaml
+
+- sensor:
+    # Gas sensoren op basis van Zonneplan integratie
+    - name: "P1 Meter Gas Daily Usage"
+      unique_id: p1_meter_gas_daily_usage
+      unit_of_measurement: "m³"
+      state_class: total
+      device_class: gas
+      icon: mdi:fire
+      state: >
+        {% if states('sensor.zonneplan_gas_consumption_today') != 'unknown' and states('sensor.zonneplan_gas_consumption_today') != 'unavailable' %}
+          {{ states('sensor.zonneplan_gas_consumption_today')|float(0)|round(2) }}
+        {% else %}
+          {{ states('sensor.gas_verbruik_vandaag')|float(0)|round(2) }}
+        {% endif %}
+    
+    # Water sensoren op basis van HomeWizard watermeter
+    - name: "Water Daily Usage"
+      unique_id: water_daily_usage
+      unit_of_measurement: "m³"
+      state_class: total
+      device_class: water
+      icon: mdi:water
+      state: >
+        {% if states('sensor.watermeter_water_usage') != 'unknown' and states('sensor.watermeter_water_usage') != 'unavailable' %}
+          {{ states('sensor.watermeter_water_usage')|float(0)|round(2) }}
+        {% else %}
+          0
+        {% endif %}
+    
+    # Zonnestroom sensoren
+    - name: "Zonnestroom naar batterij vandaag"
+      unique_id: zonnestroom_naar_batterij_vandaag
+      unit_of_measurement: "kWh"
+      state_class: total
+      device_class: energy
+      icon: mdi:battery-charging
+      state: >
+        {% if states('sensor.thuisbatterij_today') != 'unknown' and states('sensor.thuisbatterij_today') != 'unavailable' %}
+          {{ states('sensor.thuisbatterij_today')|float(0)|round(2) }}
+        {% else %}
+          0
+        {% endif %}
+    
+    - name: "Zonnestroom direct verbruikt vandaag"
+      unique_id: zonnestroom_direct_verbruikt_vandaag
+      unit_of_measurement: "kWh"
+      state_class: total
+      device_class: energy
+      icon: mdi:solar-power
+      state: >
+        {% if states('sensor.thuisbatterij_delivery_today') != 'unknown' and states('sensor.thuisbatterij_delivery_today') != 'unavailable' %}
+          {{ states('sensor.thuisbatterij_delivery_today')|float(0)|round(2) }}
+        {% else %}
+          0
+        {% endif %}

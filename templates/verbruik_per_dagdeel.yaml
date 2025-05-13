@@ -1,0 +1,32 @@
+sensor:
+  - name: "Gemiddeld Verbruik Ochtend"
+    unique_id: gemiddeld_verbruik_ochtend
+    unit_of_measurement: "W"
+    state: >
+      {% set verbruik = states('sensor.dagelijks_totaal_verbruik')|float(0) %}
+      {{ (verbruik * 0.25)|round(2) }}
+    icon: mdi:weather-sunny
+
+  - name: "Gemiddeld Verbruik Middag"
+    unique_id: gemiddeld_verbruik_middag
+    unit_of_measurement: "W"
+    state: >
+      {% set verbruik = states('sensor.dagelijks_totaal_verbruik')|float(0) %}
+      {{ (verbruik * 0.35)|round(2) }}
+    icon: mdi:weather-partly-cloudy
+
+  - name: "Gemiddeld Verbruik Avond"
+    unique_id: gemiddeld_verbruik_avond
+    unit_of_measurement: "W"
+    state: >
+      {% set verbruik = states('sensor.dagelijks_totaal_verbruik')|float(0) %}
+      {{ (verbruik * 0.30)|round(2) }}
+    icon: mdi:weather-sunset
+
+  - name: "Gemiddeld Verbruik Nacht"
+    unique_id: gemiddeld_verbruik_nacht
+    unit_of_measurement: "W"
+    state: >
+      {% set verbruik = states('sensor.dagelijks_totaal_verbruik')|float(0) %}
+      {{ (verbruik * 0.10)|round(2) }}
+    icon: mdi:weather-night

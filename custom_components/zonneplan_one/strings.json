@@ -1,0 +1,33 @@
+{
+  "config": {
+    "step": {
+      "auth": {
+        "title": "Request login token",
+        "description": "Provide your email address to get a login mail",
+        "data": {
+          "email": "Email address"
+        }
+      },
+      "fetch_password": {
+        "title": "Validate login",
+        "description": "Check your mailbox and click on the link from Zonneplan. After that proceed here by clicking **NEXT**."
+      },
+      "reauth_confirm": {
+        "title": "[%key:common::config_flow::title::reauth%]",
+        "description": "The Zonneplan integration needs to re-authenticate your account"
+      }
+    },
+    "abort": {
+      "failed_to_authenticate": "Failed to successful authenticate",
+      "authorize_url_timeout": "[%key:common::config_flow::abort::oauth2_authorize_url_timeout%]",
+      "reauth_successful": "[%key:common::config_flow::abort::reauth_successful%]"
+    },
+    "create_entry": {
+      "default": "[%key:common::config_flow::create_entry::authenticated%]"
+    },
+    "error": {
+      "failed_to_request_login": "Failed to request login link *(check logs)*",
+      "no_password": "No password received yet *(did you follow the link from the email?)*"
+    }
+  }
+}

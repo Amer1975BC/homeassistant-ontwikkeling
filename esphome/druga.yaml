@@ -1,0 +1,58 @@
+esphome:
+  name: druga
+  friendly_name: druga
+
+esp32:
+  board: esp32dev
+  framework:
+    type: arduino
+
+# Enable logging
+logger:
+
+# Enable Home Assistant API
+api:
+  encryption:
+    key: "CT08onvD+naSAi7oTcz8N+/b+TIEKfH6+JLcPyTVO5U="
+
+ota:
+  - platform: esphome
+    password: "a7b76383dd393b29c872e83cdf4ebdca"
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+  manual_ip:
+    static_ip: 192.168.2.69
+    gateway: 192.168.2.1
+    subnet: 255.255.255.0
+
+  # Enable fallback hotspot (captive portal) in case wifi connection fails
+  ap:
+    ssid: "Druga Fallback Hotspot"
+    password: "QttjMshTSdVA"
+
+captive_portal:
+
+web_server:
+  
+sensor:
+  - platform: dht
+    pin: GPIO2
+    model: DHT11
+    temperature:
+      name: "Temperatuur Schuur"
+    humidity:
+      name: "Vochtigheidsgraad Schuur"
+    update_interval: 60s
+
+  - platform: internal_temperature
+    name: "ESP32 module temperatuur"
+
+binary_sensor:
+  - platform: gpio
+    pin: GPIO27
+    name: "PIR Sensor"
+    device_class: motion
+  
+    

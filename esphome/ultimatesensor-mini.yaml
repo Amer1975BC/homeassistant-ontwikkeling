@@ -1,0 +1,21 @@
+substitutions:
+  name: ultimatesensor-mini
+  friendly_name: UltimateSensor Mini
+packages:
+  smarthomeshop.ultimatesensor_mini: github://smarthomeshop/ultimatesensor-mini/ultimatesensor-mini-v1/ultimatesensor-mini-basic.yaml@main
+esphome:
+  name: ${name}
+  name_add_mac_suffix: false
+  friendly_name: ${friendly_name}
+api:
+  encryption:
+    key: nqvZCrxTEHSQ0VksCPYz10puQTe8RvemqxpycMUqPxM=
+
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+  manual_ip:
+    static_ip: 192.168.2.126
+    gateway: 192.168.2.1
+    subnet: 255.255.255.0

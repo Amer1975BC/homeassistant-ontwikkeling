@@ -1,0 +1,56 @@
+esphome:
+  name: prva
+  friendly_name: prva
+
+esp32:
+  board: esp32dev
+  framework:
+    type: arduino
+
+# Enable logging
+logger:
+
+# Enable Home Assistant API
+api:
+  encryption:
+    key: "S1RDVHJN4J9uYu+G/w9uRvw8GzIfQ00gDOZxQjdAa7g="
+
+ota:
+  - platform: esphome
+    password: "b6ee7c209987abad3b58116fb72df692"
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+  manual_ip:
+    static_ip: 192.168.2.102
+    gateway: 192.168.2.1
+    subnet: 255.255.255.0
+
+  # Enable fallback hotspot (captive portal) in case wifi connection fails
+  ap:
+    ssid: "Prva Fallback Hotspot"
+    password: "x8fan0GJa437"
+
+captive_portal:
+
+web_server:
+
+sensor:
+  - platform: dht
+    pin: GPIO21
+    model: DHT11
+    temperature:
+      name: "Temperatuur Schuur"
+    humidity:
+      name: "Vochtigheidsgraad Schuur"
+    update_interval: 60s
+
+  - platform: internal_temperature
+    name: "ESP32 module temperatuur"
+
+binary_sensor:
+  - platform: gpio
+    pin: GPIO27
+    name: "PIR Sensor"
+    device_class: motion

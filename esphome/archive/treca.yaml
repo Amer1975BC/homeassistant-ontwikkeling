@@ -1,0 +1,32 @@
+esphome:
+  name: treca
+  friendly_name: treca
+
+esp32:
+  board: esp32dev
+  framework:
+    type: arduino
+
+# Enable logging
+logger:
+
+# Enable Home Assistant API
+api:
+  encryption:
+    key: "A8pOU2UWwFiY4p3/SiSKI5PUFTCyM11MqeI/FTDV2ws="
+
+ota:
+  - platform: esphome
+    password: "8e6626557316fcaa1f90802d2a4c59fd"
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+
+  # Enable fallback hotspot (captive portal) in case wifi connection fails
+  ap:
+    ssid: "Treca Fallback Hotspot"
+    password: "1elfnzLoPp4C"
+
+captive_portal:
+    

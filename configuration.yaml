@@ -1,0 +1,357 @@
+# Loads default set of integrations. Do not remove.
+default_config:
+
+# HTTP configuratie
+http:
+  use_x_forwarded_for: true
+  trusted_proxies:
+    - 127.0.0.1
+    - ::1
+    - 192.168.2.0/24  # Je lokale netwerk
+    - 192.168.2.100
+
+# Externe sensor configuratie
+sensor:
+  - platform: rest
+    name: Zabbix Server Status
+    resource: "http://192.168.2.100:8080/api_jsonrpc.php"
+    method: POST
+    headers:
+      Content-Type: "application/json"
+      Authorization: "Bearer e276a96f91040c0ab4c10d65047148b5bec53d6fe47f4f3cc9c38d4af2ff7af4"
+    payload: >-
+      {
+        "jsonrpc": "2.0",
+        "method": "item.get",
+        "params": {
+          "output": "extend",
+          "hostids": "10105",
+          "search": {
+            "key_": "system.cpu.load"
+          }
+        },
+        "auth": "e276a96f91040c0ab4c10d65047148b5bec53d6fe47f4f3cc9c38d4af2ff7af4",
+        "id": 1
+      }
+    value_template: "{{ value_json.result[0].lastvalue }}"
+
+# Camera configuratie
+camera:
+  - platform: ffmpeg
+    name: Achtertuin Camera
+    input: rtsp://192.168.2.103:554/user=amer1975bc_password=Rf6m0mPl_channel=0_stream=1&onvif=0.sdp?real_stream
+
+# Frontend configuratie
+frontend:
+  themes: !include_dir_merge_named themes
+  extra_module_url:
+    - /hacsfiles/kiosk-mode/kiosk-mode.js
+    - /hacsfiles/lovelace-card-mod/card-mod.js
+
+# Include bestanden
+automation: !include automations.yaml
+script: !include scripts.yaml
+scene: !include scenes.yaml
+
+# Template sensor includes
+template: !include_dir_merge_list templates/
+
+# InfluxDB configuratie
+influxdb:
+  host: 192.168.2.100
+  port: 8086
+  database: home_assistant
+  default_measurement: state
+
+# Lovelace UI configuratie
+lovelace:
+  mode: yaml
+  resources:
+    - url: /local/community/kiosk-mode/kiosk-mode.js
+      type: module
+    - url: /local/plotly-graph-card.js
+      type: module
+    - url: /local/community/lovelace-card-mod/card-mod.js
+      type: module
+    - url: /local/community/power-flow-card-plus/power-flow-card-plus.js
+      type: module
+    - url: /local/community/sunsynk-power-flow-card/sunsynk-power-flow-card.js
+      type: module
+    # Kaarten voor energiedashboard
+    - url: /local/community/mini-graph-card/mini-graph-card-bundle.js
+      type: module
+    - url: /local/community/apexcharts-card/apexcharts-card.js
+      type: module
+    - url: /local/community/ha-sankey-chart/ha-sankey-chart.js
+      type: module
+  
+
+# MQTT configuratie
+mqtt:
+  sensor:
+    - name: "Touchscreen Touched"
+      state_topic: "raspberrypi/touchscreen"
+      value_template: "{{ 'Yes' if value == 'touched' else 'No' }}"
+
+# Browser_mod configuratie
+browser_mod:
+
+# Input helpers
+input_number:
+  energieprijs_elektriciteit:
+    name: "Energieprijs Elektriciteit" 
+    min: 0
+    max: 1
+    step: 0.01
+    unit_of_measurement: EUR/kWh
+    icon: mdi:currency-eur
+    initial: 0.22
+  
+  terugleververgoeding:
+    name: "Terugleververgoeding"
+    min: 0
+    max: 1
+    step: 0.01
+    unit_of_measurement: EUR/kWh
+    icon: mdi:cash-refund
+    initial: 0.07
+    
+  # Extra input numbers voor dynamische tarieven
+  low_price_threshold:
+    name: "Lage Prijs Drempel"
+    min: 0
+    max: 0.5
+    step: 0.01
+    unit_of_measurement: EUR/kWh
+    icon: mdi:currency-eur
+    initial: 0.15
+    
+  high_price_threshold:
+    name: "Hoge Prijs Drempel"
+    min: 0
+    max: 0.5
+    step: 0.01
+    unit_of_measurement: EUR/kWh
+    icon: mdi:currency-eur
+    initial: 0.25
+    
+  battery_min_soc:
+    name: "Minimaal Batterijniveau"
+    min: 0
+    max: 100
+    step: 5
+    unit_of_measurement: "%"
+    icon: mdi:battery-low
+    initial: 20
+    
+  battery_max_soc:
+    name: "Maximaal Batterijniveau"
+    min: 0
+    max: 100
+    step: 5
+    unit_of_measurement: "%"
+    icon: mdi:battery-high
+    initial: 90
+    
+  battery_reserve_capacity:
+    name: "Batterij Reserve Capaciteit"
+    min: 0
+    max: 100
+    step: 5
+    unit_of_measurement: "%"
+    icon: mdi:battery-minus
+    initial: 10
+    
+  minimum_run_hours:
+    name: "Minimale Draaiuren"
+    min: 1
+    max: 5
+    step: 0.5
+    unit_of_measurement: "uur"
+    icon: mdi:timer-outline
+    initial: 2
+    
+  water_meter:
+    name: "Waterverbruik vandaag"
+    min: 0
+    max: 10
+    step: 0.01
+    unit_of_measurement: "m³"
+    icon: mdi:water
+    initial: 0.25  # Stel dit in op een gemiddelde waarde
+
+input_boolean:
+  touchscreen_active:
+    name: Touchscreen Activiteit
+    initial: off
+    icon: mdi:tablet
+    
+  optimize_battery_for_prices:
+    name: "Batterij Optimaliseren voor Prijzen"
+    initial: on
+    icon: mdi:battery-charging
+    
+  energy_price_notifications:
+    name: "Prijsnotificaties"
+    initial: on
+    icon: mdi:bell
+    
+  battery_status_notifications:
+    name: "Batterijstatus Notificaties"
+    initial: on
+    icon: mdi:battery-alert
+    
+  energy_savings_reports:
+    name: "Besparingsrapporten"
+    initial: on
+    icon: mdi:file-chart
+    
+  critical_price_alerts:
+    name: "Kritieke Prijsalerts"
+    initial: on
+    icon: mdi:alert-circle
+
+input_select:
+  price_strategy:
+    name: "Prijsstrategie"
+    options:
+      - "Conservatief"
+      - "Gebalanceerd"
+      - "Agressief"
+    initial: "Gebalanceerd"
+    icon: mdi:strategy
+    
+  notification_frequency:
+    name: "Notificatie Frequentie"
+    options:
+      - "Uurlijks"
+      - "Dagelijks"
+      - "Alleen bij bijzonderheden"
+    initial: "Alleen bij bijzonderheden"
+    icon: mdi:clock-time-three
+
+# TTS en Media player integraties
+tts:
+  - platform: google_translate
+    service_name: google_translate_say
+    language: nl
+
+media_player:
+  - platform: vlc
+    name: vlc_player
+    arguments: "--aout=alsa --alsa-audio-device=hw:0,0"
+
+# Notificaties
+notify:
+  - name: huisnotificatie
+    platform: group
+    services:
+      - service: mobile_app_smartphone_amer
+      - service: persistent_notification
+
+# Energiedashboard configuratie
+energy:
+  energy_sources:
+    - type: grid
+      flow_from:
+        - entity_id: sensor.zonneplan_electricity_consumption_low
+          unique_id: grid_consumption_low
+        - entity_id: sensor.zonneplan_electricity_consumption_high
+          unique_id: grid_consumption_high
+      flow_to:
+        - entity_id: sensor.zonneplan_electricity_returned_low
+          unique_id: grid_return_low
+        - entity_id: sensor.zonneplan_electricity_returned_high
+          unique_id: grid_return_high
+      cost_adjustment_day: 0.22
+      cost_adjustment_night: 0.22
+    - type: solar
+      flow_from:
+        - entity_id: sensor.sensor_totale_pv_energie_vandaag
+          unique_id: solar_production
+    - type: battery
+      flow_from:
+        - entity_id: sensor.thuisbatterij_delivery_today
+          unique_id: battery_from
+      flow_to:
+        - entity_id: sensor.thuisbatterij_today
+          unique_id: battery_to
+
+  device_consumption:
+    - entity_id: sensor.wasmachine_energy_today
+      unique_id: washing_machine
+    - entity_id: sensor.droogkast_energy_today
+      unique_id: dryer
+    - entity_id: sensor.vaatwasser_energy_today
+      unique_id: dishwasher
+    - entity_id: sensor.koelkast_energy_today
+      unique_id: refrigerator
+    - entity_id: sensor.tv_energy_today
+      unique_id: television
+
+# Integratie met warmtepomp en batterij (utility meters)
+utility_meter:
+  # Bestaande utility meters
+  warmtepomp_daily:
+    source: sensor.p1_power_consumption_watts
+    cycle: daily
+    name: Warmtepomp Dagelijks Verbruik
+  
+  warmtepomp_monthly:
+    source: sensor.p1_power_consumption_watts
+    cycle: monthly
+    name: Warmtepomp Maandelijks Verbruik
+
+  # Batterij meters voor Zonneplan thuisbatterij
+  batterij_energie_ontladen_vandaag:
+    source: sensor.thuisbatterij_delivery_today
+    cycle: daily
+    name: Batterij Ontladen Vandaag
+  
+  batterij_energie_laden_vandaag:
+    source: sensor.thuisbatterij_today
+    cycle: daily
+    name: Batterij Laden Vandaag
+
+# Recorder en historie configuratie
+recorder:
+  db_url: mysql://homeassistant:kurcina1@core-mariadb/homeassistant?charset=utf8mb4
+  purge_keep_days: 7
+  include:
+    domains:
+      - sensor
+      - binary_sensor
+      - switch
+      - climate
+      - light
+    entities:
+      - sensor.solar_vermogen_totaal
+      - sensor.huisverbruik_van_zon
+      - sensor.huisverbruik_van_net
+      - sensor.huisverbruik_van_batterij
+      - sensor.teruglevering_naar_net
+      - sensor.thuisbatterij_soc
+      - sensor.thuisbatterij_power
+      - sensor.zonneplan_current_electricity_tariff
+  exclude:
+    domains:
+      - automation
+      - device_tracker
+    entity_globs:
+      - sensor.weather_*
+      - sensor.date_*
+
+# Logging configuratie
+logger:
+  default: info
+  logs:
+    homeassistant.components.template: warning
+    homeassistant.components.http: warning
+    homeassistant.components.mqtt: info
+    homeassistant.components.recorder: warning
+
+shell_command:
+  git_backup: "/config/git-backup.sh"
+
+# REST API configuratie
+api:

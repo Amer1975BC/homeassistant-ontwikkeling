@@ -1,0 +1,40 @@
+- sensor:
+    # Sensors - Inverterstatistieken
+    - name: "Percentage Opwek Solaredge"
+      unique_id: percentage_opwek_solaredge
+      unit_of_measurement: "%"
+      state_class: measurement
+      state: >
+        {% set totaal = states('sensor.sensor_totale_pv_energie_vandaag')|float(0.1) %}
+        {% set solaredge = states('sensor.solaredge_energieopbrengst_vandaag')|float(0) %}
+        {% if totaal > 0 %}
+          {{ ((solaredge / totaal) * 100) | round(1) }}
+        {% else %}
+          0
+        {% endif %}
+
+    - name: "Percentage Opwek Envoy"
+      unique_id: percentage_opwek_envoy
+      unit_of_measurement: "%"
+      state_class: measurement
+      state: >
+        {% set totaal = states('sensor.sensor_totale_pv_energie_vandaag')|float(0.1) %}
+        {% set envoy = states('sensor.envoy_122309090641_energy_production_today')|float(0) %}
+        {% if totaal > 0 %}
+          {{ ((envoy / totaal) * 100) | round(1) }}
+        {% else %}
+          0
+        {% endif %}
+
+    - name: "Percentage Opwek Growatt"
+      unique_id: percentage_opwek_growatt
+      unit_of_measurement: "%"
+      state_class: measurement
+      state: >
+        {% set totaal = states('sensor.sensor_totale_pv_energie_vandaag')|float(0.1) %}
+        {% set growatt = states('sensor.amer_growatt_total_energy_today')|float(0) %}
+        {% if totaal > 0 %}
+          {{ ((growatt / totaal) * 100) | round(1) }}
+        {% else %}
+          0
+        {% endif %}

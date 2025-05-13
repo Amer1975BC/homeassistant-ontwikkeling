@@ -1,0 +1,19 @@
+{
+  "domain": "zonneplan_one",
+  "name": "Zonneplan",
+  "after_dependencies": [
+    "http"
+  ],
+  "codeowners": [
+    "@fsaris"
+  ],
+  "config_flow": true,
+  "documentation": "https://github.com/fsaris/home-assistant-zonneplan-one",
+  "homekit": {},
+  "iot_class": "cloud_polling",
+  "issue_tracker": "https://github.com/fsaris/home-assistant-zonneplan-one/issues",
+  "requirements": [],
+  "ssdp": [],
+  "version": "2025.2.0",
+  "zeroconf": []
+}

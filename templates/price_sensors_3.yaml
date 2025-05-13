@@ -1,0 +1,98 @@
+- sensor:
+    # Goedkoopste uur vandaag
+    - name: "Goedkoopste Uur Vandaag"
+      unique_id: goedkoopste_uur_vandaag
+      icon: mdi:clock-time-three-outline
+      state: >
+        {% set prices = state_attr('sensor.zonneplan_current_electricity_tariff', 'prices_today') %}
+        {% set hours = state_attr('sensor.zonneplan_current_electricity_tariff', 'hours_priced_today') %}
+        {% if prices and hours %}
+          {% set min_price = prices | min %}
+          {% set min_index = prices.index(min_price) %}
+          {% if hours[min_index] %}
+            {% set hour = hours[min_index][11:13] | int %}
+            {{ hour }}:00 - {{ (hour + 1) }}:00 (€{{ min_price | round(3) }}/kWh)
+          {% else %}
+            Onbekend
+          {% endif %}
+        {% else %}
+          Geen data beschikbaar
+        {% endif %}
+
+    # Goedkoopste 3 opeenvolgende uren vandaag (voor langlopende apparaten)
+    - name: "Goedkoopste 3 Uren Vandaag"
+      unique_id: goedkoopste_3_uren_vandaag
+      icon: mdi:clock-time-three-outline
+      state: >
+        {% set prices = state_attr('sensor.zonneplan_current_electricity_tariff', 'prices_today') %}
+        {% set hours = state_attr('sensor.zonneplan_current_electricity_tariff', 'hours_priced_today') %}
+        {% if prices and hours and prices|length >= 3 %}
+          {% set min_avg = 999 %}
+          {% set best_start = 0 %}
+          {% for i in range(prices|length - 2) %}
+            {% set window_prices = [prices[i], prices[i+1], prices[i+2]] %}
+            {% set avg_price = (window_prices | sum) / 3 %}
+            {% if avg_price < min_avg %}
+              {% set min_avg = avg_price %}
+              {% set best_start = i %}
+            {% endif %}
+          {% endfor %}
+          {% if hours[best_start] %}
+            {% set start_hour = hours[best_start][11:13] | int %}
+            {% set end_hour = start_hour + 3 %}
+            {{ start_hour }}:00 - {{ end_hour }}:00 (gem. €{{ min_avg | round(3) }}/kWh)
+          {% else %}
+            Onbekend
+          {% endif %}
+        {% else %}
+          Geen data beschikbaar
+        {% endif %}
+
+    # Goedkoopste uur morgen
+    - name: "Goedkoopste Uur Morgen"
+      unique_id: goedkoopste_uur_morgen
+      icon: mdi:clock-time-three-outline
+      state: >
+        {% set prices = state_attr('sensor.zonneplan_current_electricity_tariff', 'prices_tomorrow') %}
+        {% set hours = state_attr('sensor.zonneplan_current_electricity_tariff', 'hours_priced_tomorrow') %}
+        {% if prices and hours %}
+          {% set min_price = prices | min %}
+          {% set min_index = prices.index(min_price) %}
+          {% if hours[min_index] %}
+            {% set hour = hours[min_index][11:13] | int %}
+            {{ hour }}:00 - {{ (hour + 1) }}:00 (€{{ min_price | round(3) }}/kWh)
+          {% else %}
+            Onbekend
+          {% endif %}
+        {% else %}
+          Geen data beschikbaar
+        {% endif %}
+
+    # Goedkoopste 3 opeenvolgende uren morgen
+    - name: "Goedkoopste 3 Uren Morgen"
+      unique_id: goedkoopste_3_uren_morgen
+      icon: mdi:clock-time-three-outline
+      state: >
+        {% set prices = state_attr('sensor.zonneplan_current_electricity_tariff', 'prices_tomorrow') %}
+        {% set hours = state_attr('sensor.zonneplan_current_electricity_tariff', 'hours_priced_tomorrow') %}
+        {% if prices and hours and prices|length >= 3 %}
+          {% set min_avg = 999 %}
+          {% set best_start = 0 %}
+          {% for i in range(prices|length - 2) %}
+            {% set window_prices = [prices[i], prices[i+1], prices[i+2]] %}
+            {% set avg_price = (window_prices | sum) / 3 %}
+            {% if avg_price < min_avg %}
+              {% set min_avg = avg_price %}
+              {% set best_start = i %}
+            {% endif %}
+          {% endfor %}
+          {% if hours[best_start] %}
+            {% set start_hour = hours[best_start][11:13] | int %}
+            {% set end_hour = start_hour + 3 %}
+            {{ start_hour }}:00 - {{ end_hour }}:00 (gem. €{{ min_avg | round(3) }}/kWh)
+          {% else %}
+            Onbekend
+          {% endif %}
+        {% else %}
+          Geen data beschikbaar
+        {% endif %}

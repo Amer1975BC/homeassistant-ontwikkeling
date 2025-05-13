@@ -1,0 +1,59 @@
+esphome:
+  name: veranda-tmp-hum-pir
+  friendly_name: Veranda-TMP-HUM-PIR
+
+esp32:
+  board: esp32dev
+  framework:
+    type: arduino
+
+# Enable logging
+logger:
+
+# Enable Home Assistant API
+api:
+  encryption:
+    key: "aeaawT6wh6wodhf15HHsCVMebJQvBoU5kNZQ97M4Uvw="
+
+ota:
+  - platform: esphome
+    password: "28db0bc66641572e725d49dc094a77cb"
+
+  # Enable fallback hotspot (captive portal) in case wifi connection fails
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+  manual_ip:
+    static_ip: 192.168.2.253
+    gateway: 192.168.2.1
+    subnet: 255.255.255.0
+  # Enable fallback hotspot (captive portal) in case wifi connection fails
+  ap:
+    ssid: "Veranda-Tmp-Hum-Pir"
+    password: "nX3h9nQQzjUx"
+
+
+captive_portal:
+
+web_server:
+
+sensor:
+  - platform: dht
+    pin: GPIO4
+    model: DHT11
+    temperature:
+      name: "Temperatuur Veranda"
+    humidity:
+      name: "Vochtigheidsgraad Veranda"
+    update_interval: 60s
+
+  - platform: internal_temperature
+    name: "ESP32 module temperatuur"
+
+binary_sensor:
+  - platform: gpio
+    pin: GPIO27
+    name: "Veranda PIR Sensor"
+    device_class: motion
+    

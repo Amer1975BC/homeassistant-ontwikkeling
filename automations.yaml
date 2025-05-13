@@ -1,0 +1,391 @@
+- id: '1743362793817'
+  alias: Overloop aan
+  description: ''
+  triggers:
+  - type: occupied
+    device_id: da0d5c1c9d31a6e3a31b91b7f512cac2
+    entity_id: 47ab9af7389bb29696354b92567f298a
+    domain: binary_sensor
+    trigger: device
+    for:
+      hours: 0
+      minutes: 0
+      seconds: 5
+  conditions: []
+  actions:
+  - action: light.turn_on
+    metadata: {}
+    data: {}
+    target:
+      device_id: 81e87079d3d378565c8fd1046fff5d6e
+  - wait_for_trigger:
+    - type: not_occupied
+      device_id: da0d5c1c9d31a6e3a31b91b7f512cac2
+      entity_id: 47ab9af7389bb29696354b92567f298a
+      domain: binary_sensor
+      trigger: device
+      for:
+        hours: 0
+        minutes: 5
+        seconds: 0
+  - action: light.turn_off
+    metadata: {}
+    data: {}
+    target:
+      device_id: 81e87079d3d378565c8fd1046fff5d6e
+  mode: single
+- id: '1743455717087'
+  alias: Traplicht aan-uit
+  description: ''
+  triggers:
+  - type: motion
+    device_id: 4dc75999afc962b4a586164f461e5d0f
+    entity_id: 85999649d3ea6142543ba16295b4c592
+    domain: binary_sensor
+    trigger: device
+  conditions: []
+  actions:
+  - action: light.turn_on
+    metadata: {}
+    data: {}
+    target:
+      entity_id:
+      - light.trap_verlichting
+      - light.shelly1pmminig3_5432047088bc_switch_0
+  - wait_for_trigger:
+    - type: no_motion
+      device_id: 4dc75999afc962b4a586164f461e5d0f
+      entity_id: 85999649d3ea6142543ba16295b4c592
+      domain: binary_sensor
+      trigger: device
+      for:
+        hours: 0
+        minutes: 1
+        seconds: 0
+  - action: light.turn_off
+    metadata: {}
+    data: {}
+    target:
+      entity_id:
+      - light.trap_verlichting
+      - light.shelly1pmminig3_5432047088bc_switch_0
+  mode: single
+- id: '1743652840649'
+  alias: Force refresh HA kiosk elke 15 minuten
+  triggers:
+  - minutes: /15
+    trigger: time_pattern
+  actions:
+  - data:
+      deviceID: chrome-pi5
+    action: browser_mod.refresh
+  mode: single
+- id: lamp_aan_zone2
+  alias: Lamp aan als iemand in Zone 2 is (en het is donker in de keuken)
+  description: ''
+  triggers:
+  - entity_id: binary_sensor.iemand_in_zone_2
+    to: 'on'
+    trigger: state
+  conditions:
+  - condition: numeric_state
+    entity_id: sensor.keuken_lichtniveau
+    below: 100
+  actions:
+  - target:
+      entity_id: light.keuken
+    action: light.turn_on
+  mode: single
+- id: lamp_uit_zone2
+  alias: Lamp uit na 5 min als Zone 2 leeg is
+  triggers:
+  - entity_id:
+    - binary_sensor.iemand_in_zone_2
+    to: 'off'
+    for:
+      hours: 0
+      minutes: 1
+      seconds: 0
+    trigger: state
+  actions:
+  - target:
+      entity_id:
+      - light.keuken
+    action: light.turn_off
+    data: {}
+  mode: single
+- id: '1743962567168'
+  alias: Notificatie
+  description: ''
+  use_blueprint:
+    path: homeassistant/notify_leaving_zone.yaml
+    input:
+      person_entity: person.amer_karovic
+      zone_entity: zone.home
+      notify_device: 93d8e3ac3171201059ee154deb5b8301
+- id: '1744379311602'
+  alias: Start Screensaver na 5 minuten inactiviteit
+  description: Zet het scherm naar het screensaver-dashboard als er geen aanraking
+    is na 5 minuten
+  triggers:
+  - entity_id: binary_sensor.chrome_pi5
+    to: 'off'
+    for: 00:00:20
+    trigger: state
+  actions:
+  - data:
+      entity_id: browser.chrome-pi5
+      path: /dashboard-cameras/fotos
+    action: browser_mod.navigate
+  mode: single
+- id: '1744379350948'
+  alias: Terug naar standaard-dashboard bij aanraking
+  description: Zet het scherm terug naar het standaard-dashboard als er aanraking
+    is
+  triggers:
+  - entity_id: binary_sensor.chrome_pi5
+    to: 'on'
+    trigger: state
+  actions:
+  - data:
+      entity_id: browser.chrome-pi5
+      path: /dash
+    action: browser_mod.navigate
+  mode: single
+- id: '1744398195293'
+  alias: Fietshok aan-uit
+  description: ''
+  triggers:
+  - type: motion
+    device_id: 1a6d5a737b77b49feea08ebffd6be91b
+    entity_id: cfd7b6135842162b60b1a3ec2fbfd920
+    domain: binary_sensor
+    trigger: device
+  conditions: []
+  actions:
+  - action: light.turn_on
+    metadata: {}
+    data: {}
+    target:
+      entity_id: light.fietshok_verlichting
+  - wait_for_trigger:
+    - type: no_motion
+      device_id: 1a6d5a737b77b49feea08ebffd6be91b
+      entity_id: cfd7b6135842162b60b1a3ec2fbfd920
+      domain: binary_sensor
+      trigger: device
+      for:
+        hours: 0
+        minutes: 2
+        seconds: 0
+  - action: light.turn_off
+    metadata: {}
+    data: {}
+    target:
+      entity_id: light.fietshok_verlichting
+  mode: single
+- id: '1744815378132'
+  alias: Tuin & voortuin aan/uit
+  description: ''
+  triggers:
+  - trigger: sun
+    event: sunset
+    offset: 0
+  conditions: []
+  actions:
+  - action: light.turn_on
+    metadata: {}
+    data: {}
+    target:
+      entity_id:
+      - light.tuin_verlichting
+      - light.voortuin_verlichting
+  - wait_for_trigger:
+    - trigger: time
+      at: '22:30:00'
+  - action: light.turn_off
+    metadata: {}
+    data: {}
+    target:
+      entity_id:
+      - light.tuin_verlichting
+      - light.voortuin_verlichting
+  mode: single
+- id: '1744972731139'
+  alias: Tuin deur licht aan uit
+  description: Licht aan bij beweging na zonsondergang, uit na 2 minuten geen beweging
+  triggers:
+  - entity_id: binary_sensor.tuindeur_pir_sensor
+    to: 'on'
+    trigger: state
+  conditions:
+  - condition: sun
+    after: sunset
+  - condition: state
+    entity_id: light.tuinlicht_deur
+    state: 'off'
+  actions:
+  - target:
+      entity_id: light.tuinlicht_deur
+    action: light.turn_on
+  - wait_for_trigger:
+    - entity_id: binary_sensor.tuindeur_pir_sensor
+      to: 'off'
+      for:
+        minutes: 2
+      trigger: state
+  - target:
+      entity_id: light.tuinlicht_deur
+    action: light.turn_off
+  mode: restart
+- id: '1745077209574'
+  alias: Schuurlicht aan-uit
+  description: ''
+  triggers:
+  - type: motion
+    device_id: 1930155496f69426ba8ec40beaa1b589
+    entity_id: aa2c9e77ae4ed7ecc73438f5bf9cbd7c
+    domain: binary_sensor
+    trigger: device
+  conditions: []
+  actions:
+  - type: turn_on
+    device_id: 0a662c49bb931cf068aa5d90e4e8a350
+    entity_id: b55f6235ad6dd89a104186453d11d5fa
+    domain: switch
+  - wait_for_trigger:
+    - type: no_motion
+      device_id: 1930155496f69426ba8ec40beaa1b589
+      entity_id: aa2c9e77ae4ed7ecc73438f5bf9cbd7c
+      domain: binary_sensor
+      trigger: device
+      for:
+        hours: 0
+        minutes: 2
+        seconds: 0
+  - type: turn_off
+    device_id: 0a662c49bb931cf068aa5d90e4e8a350
+    entity_id: b55f6235ad6dd89a104186453d11d5fa
+    domain: switch
+  mode: single
+- id: thuisbatterij_laden_goedkoop
+  alias: Thuisbatterij Laden Tijdens Goedkoopste Uren
+  description: Schakelt batterij laden in wanneer elektriciteit het goedkoopst is
+  trigger:
+  - platform: time_pattern
+    minutes: '1'
+  condition:
+  - condition: template
+    value_template: "{% set current_hour = now().hour %} {% set prices_today = state_attr('sensor.zonneplan_current_electricity_tariff',
+      'prices_today') %} {% set hours_priced = state_attr('sensor.zonneplan_current_electricity_tariff',
+      'hours_priced_today') %} {% if not prices_today or not hours_priced %}\n  {{
+      false }}\n{% else %}\n  {% set current_price = prices_today[current_hour] |
+      float %}\n  {% set avg_price = prices_today | sum / prices_today | length %}\n
+      \ {% set cheap_threshold = avg_price * 0.8 %}\n  {% set battery_percentage =
+      states('sensor.thuisbatterij_percentage') | float %}\n  {{ current_price < cheap_threshold
+      and battery_percentage < 80 }}\n{% endif %}\n"
+  - condition: numeric_state
+    entity_id: sensor.thuisbatterij_percentage
+    below: 80
+  action:
+  - service: notify.mobile_app
+    data:
+      title: Thuisbatterij Laden
+      message: 'Energieprijs is nu gunstig (€{{ state_attr(''sensor.zonneplan_current_electricity_tariff'',
+        ''prices_today'')[now().hour] }}).  Batterij wordt opgeladen.
+
+        '
+  mode: single
+- id: melding_lage_energieprijzen
+  alias: Melding Zeer Lage Energieprijzen
+  description: Stuurt een notificatie wanneer de energieprijs negatief of zeer laag
+    is
+  trigger:
+  - platform: time_pattern
+    minutes: '0'
+  condition:
+  - condition: template
+    value_template: "{% set current_hour = now().hour %} {% set prices_today = state_attr('sensor.zonneplan_current_electricity_tariff',
+      'prices_today') %} {% if not prices_today %}\n  {{ false }}\n{% else %}\n  {%
+      set current_price = prices_today[current_hour] | float %}\n  {{ current_price
+      < 0.03 }}\n{% endif %}\n"
+  action:
+  - service: notify.mobile_app
+    data:
+      title: Zeer Lage Energieprijs!
+      message: 'De energieprijs is nu zeer laag (€{{ state_attr(''sensor.zonneplan_current_electricity_tariff'',
+        ''prices_today'')[now().hour] }}/kWh). Perfect moment om energieverbruikende
+        apparaten te gebruiken!
+
+        '
+  mode: single
+- id: wasmachine_goedkoopste_uur
+  alias: Wasmachine Start tijdens Goedkoopste Uur
+  description: Stuurt een notificatie wanneer het goedkoopste uur van de dag begint
+  trigger:
+  - platform: time_pattern
+    minutes: '0'
+  condition:
+  - condition: template
+    value_template: "{% set current_hour = now().hour %} {% set prices_today = state_attr('sensor.zonneplan_current_electricity_tariff',
+      'prices_today') %} {% if not prices_today %}\n  {{ false }}\n{% else %}\n  {%
+      set min_price = prices_today | min %}\n  {% set min_index = prices_today.index(min_price)
+      %}\n  {{ current_hour == min_index }}\n{% endif %}\n"
+  action:
+  - service: notify.mobile_app
+    data:
+      title: Goedkoopste Uur voor Stroom
+      message: 'Het goedkoopste uur voor elektriciteit is nu begonnen!  Prijs: €{{
+        state_attr(''sensor.zonneplan_current_electricity_tariff'', ''prices_today'')
+        | min }}/kWh. Ideaal moment om de wasmachine te starten.
+
+        '
+  mode: single
+- id: vaatwasser_advies
+  alias: Vaatwasser Optimale Starttijd
+  description: Bepaalt het beste moment om de vaatwasser te starten voor een programma
+    van 3 uur
+  trigger:
+  - platform: time
+    at: '17:00:00'
+  condition: []
+  action:
+  - service: notify.mobile_app
+    data:
+      title: Vaatwasser Advies
+      message: "{% set prices_today = state_attr('sensor.zonneplan_current_electricity_tariff',
+        'prices_today') %} {% if not prices_today %}\n  Geen prijsinformatie beschikbaar.\n{%
+        else %}\n  {% set hours_left = range(now().hour, 24) | list %}\n  {% set min_avg
+        = 999 %}\n  {% set best_start = 0 %}\n  {% for start_hour in hours_left %}\n
+        \   {% if start_hour + 3 <= 24 %}\n      {% set window_prices = [\n        prices_today[start_hour],\n
+        \       prices_today[start_hour + 1],\n        prices_today[start_hour + 2]\n
+        \     ] %}\n      {% set avg_price = (window_prices | sum) / 3 %}\n      {%
+        if avg_price < min_avg %}\n        {% set min_avg = avg_price %}\n        {%
+        set best_start = start_hour %}\n      {% endif %}\n    {% endif %}\n  {% endfor
+        %}\n  Beste tijd om de vaatwasser te starten: {{ best_start }}:00. \n  Gemiddelde
+        prijs over 3 uur: €{{ min_avg | round(4) }}/kWh.\n{% endif %}\n"
+  mode: single
+- id: git_backup_automation
+  alias: Git Backup bij configuratiewijziging
+  description: ''
+  triggers:
+  - trigger: time
+    at: 00:00:00
+  - trigger: time
+    at: 03:00:00
+  - trigger: time
+    at: 06:00:00
+  - trigger: time
+    at: 09:00:00
+  - trigger: time
+    at: '12:00:00'
+  - trigger: time
+    at: '15:00:00'
+  - trigger: time
+    at: '18:00:00'
+  - trigger: time
+    at: '21:00:00'
+  actions:
+  - action: shell_command.git_backup
+    data: {}
+  mode: single

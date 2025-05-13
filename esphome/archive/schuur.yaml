@@ -1,0 +1,51 @@
+esphome:
+  name: testen
+
+
+esp32:
+  board: esp32dev
+  framework:
+    type: arduino
+
+logger:
+
+api:
+  encryption:
+    key: "Ur5xefKUbQ9oghT79cv7nL1uTggqa7A6bzWrnh6hWuk="
+
+ota:
+  platform: esphome
+  password: "c4d064046d85a17a3ad07aaa6a745a40"
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+  manual_ip:
+    static_ip: 192.168.2.102
+    gateway: 192.168.2.254
+    subnet: 255.255.255.0
+
+  ap:
+    ssid: "Schuur Fallback Hotspot"
+    password: "OUnza3iJB1CQ"
+
+captive_portal:
+
+web_server:
+
+sensor:
+  - platform: dht
+    pin: GPIO21
+    model: DHT11
+    temperature:
+      name: "Temperatuur Schuur-achter"
+
+  - platform: internal_temperature
+    name: "ESP32 module temperatuur"
+  
+binary_sensor:
+  - platform: gpio
+    pin: GPIO27
+    name: "PIR Sensor"
+    device_class: motion
+    
