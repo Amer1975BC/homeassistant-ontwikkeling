@@ -253,6 +253,10 @@
     device_id: 0a662c49bb931cf068aa5d90e4e8a350
     entity_id: b55f6235ad6dd89a104186453d11d5fa
     domain: switch
+  - type: turn_on
+    device_id: e0e6c85f5f75268b0049316a85edb19b
+    entity_id: a82f6149ee85dab6aa040009054cf7bf
+    domain: switch
   - wait_for_trigger:
     - type: no_motion
       device_id: 1930155496f69426ba8ec40beaa1b589
@@ -266,6 +270,10 @@
   - type: turn_off
     device_id: 0a662c49bb931cf068aa5d90e4e8a350
     entity_id: b55f6235ad6dd89a104186453d11d5fa
+    domain: switch
+  - type: turn_off
+    device_id: e0e6c85f5f75268b0049316a85edb19b
+    entity_id: a82f6149ee85dab6aa040009054cf7bf
     domain: switch
   mode: single
 - id: thuisbatterij_laden_goedkoop
