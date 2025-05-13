@@ -18,13 +18,13 @@
     # Water sensoren op basis van HomeWizard watermeter
     - name: "Water Daily Usage"
       unique_id: water_daily_usage
-      unit_of_measurement: "m³"
+      unit_of_measurement: "m³" 
       state_class: total
       device_class: water
       icon: mdi:water
       state: >
-        {% if states('sensor.watermeter_water_usage') != 'unknown' and states('sensor.watermeter_water_usage') != 'unavailable' %}
-          {{ states('sensor.watermeter_water_usage')|float(0)|round(2) }}
+        {% if states('sensor.water_dagelijks') != 'unknown' and states('sensor.water_dagelijks') != 'unavailable' %}
+          {{ states('sensor.water_dagelijks')|float(0)|round(2) }}
         {% else %}
           0
         {% endif %}

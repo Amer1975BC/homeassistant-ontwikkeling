@@ -312,6 +312,22 @@ utility_meter:
     source: sensor.thuisbatterij_today
     cycle: daily
     name: Batterij Laden Vandaag
+    
+  # Water verbruik meters
+  water_dagelijks:
+    source: sensor.watermeter_totaal_water_verbruik
+    cycle: daily
+    name: "Water Dagelijks Verbruik"
+  
+  water_wekelijks:
+    source: sensor.watermeter_totaal_water_verbruik
+    cycle: weekly
+    name: "Water Wekelijks Verbruik"
+  
+  water_maandelijks:
+    source: sensor.watermeter_totaal_water_verbruik
+    cycle: monthly
+    name: "Water Maandelijks Verbruik"
 
 # Recorder en historie configuratie
 recorder:
