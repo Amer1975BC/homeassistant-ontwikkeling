@@ -1,5 +1,4 @@
-# Voorgestelde configuratie voor daily_utility_sensors.yaml
-
+# daily_utility_sensors.yaml - Dagelijkse verbruikssensoren
 - sensor:
     # Gas sensoren op basis van Zonneplan integratie
     - name: "P1 Meter Gas Daily Usage"
@@ -15,16 +14,20 @@
           {{ states('sensor.gas_verbruik_vandaag')|float(0)|round(2) }}
         {% endif %}
     
-    # Water sensoren op basis van HomeWizard watermeter
+    # Water sensoren op basis van utility meters
     - name: "Water Daily Usage"
       unique_id: water_daily_usage
-      unit_of_measurement: "m³" 
+      unit_of_measurement: "m³"
       state_class: total
       device_class: water
       icon: mdi:water
       state: >
         {% if states('sensor.water_dagelijks') != 'unknown' and states('sensor.water_dagelijks') != 'unavailable' %}
           {{ states('sensor.water_dagelijks')|float(0)|round(2) }}
+        {% elif states('sensor.watermeter_total_water_usage') != 'unknown' and states('sensor.watermeter_total_water_usage') != 'unavailable' %}
+          {% set last_value = states.sensor.watermeter_total_water_usage.attributes.get('last_reset_value', 0)|float(0) %}
+          {% set current_value = states('sensor.watermeter_total_water_usage')|float(0) %}
+          {{ (current_value - last_value)|round(2) if current_value >= last_value else 0 }}
         {% else %}
           0
         {% endif %}

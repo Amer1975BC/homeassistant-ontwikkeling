@@ -1,6 +1,4 @@
-- sensor:
-# Voorgestelde configuratie voor dashboard_utility_sensors.yaml
-
+# dashboard_utility_sensors.yaml - Maandelijkse verbruikssensoren
 - sensor:
     # Maandelijkse verbruikssensoren
     - name: "P1 Meter Gas Monthly Usage"
@@ -25,12 +23,12 @@
       device_class: water
       icon: mdi:water
       state: >
-        {% if states('sensor.watermeter_water_usage') != 'unknown' and states('sensor.watermeter_water_usage') != 'unavailable' %}
-          {% set daily = states('sensor.watermeter_water_usage')|float(0) %}
-          {% set days_in_month = now().day %}
-          {{ (daily * days_in_month)|round(2) }}
+        {% if states('sensor.water_maandelijks') != 'unknown' and states('sensor.water_maandelijks') != 'unavailable' %}
+          {{ states('sensor.water_maandelijks')|float(0)|round(2) }}
         {% else %}
-          0
+          {% set daily = states('sensor.water_verbruik_vandaag')|float(0) %}
+          {% set days_in_month = now().day %}
+          {{ (daily * days_in_month)|round(2) if days_in_month > 0 else 0 }}
         {% endif %}
     
     # Temperatuur sensor
@@ -77,6 +75,6 @@
       device_class: monetary
       icon: mdi:cash
       state: >
-        {% set tarief = 1.20 %}  {# Pas dit aan naar uw werkelijke waterprijs #}
+        {% set tarief = states('input_number.water_kosten_per_kuub')|float(1.35) %}
         {% set verbruik = states('sensor.water_monthly_usage')|float(0) %}
         {{ (verbruik * tarief)|round(2) }}

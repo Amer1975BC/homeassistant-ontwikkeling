@@ -10,64 +10,6 @@ http:
     - 192.168.2.0/24  # Je lokale netwerk
     - 192.168.2.100
 
-# Externe sensor configuratie
-sensor:
-  - platform: rest
-    name: Zabbix Server Status
-    resource: "http://192.168.2.100:8080/api_jsonrpc.php"
-    method: POST
-    headers:
-      Content-Type: "application/json"
-      Authorization: "Bearer e276a96f91040c0ab4c10d65047148b5bec53d6fe47f4f3cc9c38d4af2ff7af4"
-    payload: >-
-      {
-        "jsonrpc": "2.0",
-        "method": "item.get",
-        "params": {
-          "output": "extend",
-          "hostids": "10105",
-          "search": {
-            "key_": "system.cpu.load"
-          }
-        },
-        "auth": "e276a96f91040c0ab4c10d65047148b5bec53d6fe47f4f3cc9c38d4af2ff7af4",
-        "id": 1
-      }
-    value_template: "{{ value_json.result[0].lastvalue }}"
-    
-  # Template sensoren voor waterverbruik berekeningen
-  - platform: template
-    sensors:
-      water_verbruik_vandaag:
-        friendly_name: "Water verbruik vandaag"
-        unit_of_measurement: "m³"
-        value_template: "{{ states('sensor.water_dagelijks')|float(0) }}"
-        device_class: water
-        state_class: total
-        icon: mdi:water
-      
-      water_verbruik_vandaag_direct:
-        friendly_name: "Water verbruik vandaag direct"
-        unit_of_measurement: "m³"
-        value_template: >-
-          {% if states('sensor.watermeter_total_water_usage') != 'unknown' and 
-                states('sensor.watermeter_total_water_usage') != 'unavailable' %}
-            {{ states('sensor.watermeter_total_water_usage')|float(0) - states.sensor.watermeter_total_water_usage.attributes.get('last_reset_value', 0)|float(0) }}
-          {% else %}
-            {{ states('sensor.water_dagelijks')|float(0) }}
-          {% endif %}
-        device_class: water
-        state_class: total
-        icon: mdi:water
-      
-      water_verbruik_kosten_vandaag:
-        friendly_name: "Water verbruik kosten vandaag"
-        unit_of_measurement: "EUR"
-        value_template: "{{ (states('sensor.water_verbruik_vandaag')|float(0) * 1.35)|round(2) }}"
-        device_class: monetary
-        state_class: total
-        icon: mdi:cash
-
 # Camera configuratie
 camera:
   - platform: ffmpeg
@@ -337,17 +279,17 @@ utility_meter:
     
   # Water verbruik meters
   water_dagelijks:
-    source:  sensor.watermeter_total_water_usage
+    source: sensor.watermeter_total_water_usage
     cycle: daily
     name: "Water Dagelijks Verbruik"
   
   water_wekelijks:
-    source:  sensor.watermeter_total_water_usage
+    source: sensor.watermeter_total_water_usage
     cycle: weekly
     name: "Water Wekelijks Verbruik"
   
   water_maandelijks:
-    source:  sensor.watermeter_total_water_usage
+    source: sensor.watermeter_total_water_usage
     cycle: monthly
     name: "Water Maandelijks Verbruik"
 
@@ -374,8 +316,9 @@ recorder:
       - sensor.water_dagelijks
       - sensor.water_wekelijks
       - sensor.water_maandelijks
+      - sensor.water_daily_usage
+      - sensor.water_monthly_usage
       - sensor.water_verbruik_vandaag
-      - sensor.water_verbruik_vandaag_direct
       - sensor.water_verbruik_kosten_vandaag
   exclude:
     domains:

@@ -1,3 +1,4 @@
+# dashboard_sensors.yaml - Sensoren voor dashboard
 - sensor:
     # Energy flow sensoren
     - name: "Zonnestroom Direct Verbruikt Vandaag"
@@ -45,7 +46,6 @@
       device_class: energy
       state: >
         {{ states('sensor.zonneplan_electricity_consumption_today')|float(0)|round(2) }}
-
     # Zelfvoorziening percentage
     - name: "Percentage Zelfvoorziening Elektriciteit"
       unique_id: percentage_zelfvoorziening_elektriciteit
@@ -63,7 +63,6 @@
         {% else %}
           0
         {% endif %}
-
     # Utility sensoren
     - name: "Gas Verbruik Vandaag"
       unique_id: gas_verbruik_vandaag
@@ -73,20 +72,21 @@
       state: >
         {{ states('sensor.zonneplan_gas_consumption_today')|float(0)|round(2) }}
         
-    - name: "Water verbruik vandaag"
+    - name: "Water Verbruik Vandaag"
       unique_id: water_verbruik_vandaag
-      device_class: water
       unit_of_measurement: "m³"
       state_class: total
+      device_class: water
       icon: mdi:water
       state: >
         {% if states('sensor.water_dagelijks') != 'unknown' and states('sensor.water_dagelijks') != 'unavailable' %}
           {{ states('sensor.water_dagelijks')|float(0)|round(2) }}
         {% else %}
-          0
+          {% set waterverbruik = states('input_number.water_meter')|float(0) %}
+          {{ waterverbruik|round(2) }}
         {% endif %}
         
-        # Kosten sensoren
+    # Kosten sensoren
     - name: "Gas Verbruik Kosten Vandaag" 
       unique_id: gas_verbruik_kosten_vandaag
       unit_of_measurement: "EUR"
@@ -107,26 +107,5 @@
       icon: mdi:cash
       state: >
         {% set verbruik = states('sensor.water_verbruik_vandaag')|float(0) %}
-        {# Pas dit aan naar de werkelijke waterprijs #}
-        {% set water_prijs = 1.20 %}  
+        {% set water_prijs = states('input_number.water_kosten_per_kuub')|float(1.35) %}  
         {{ (verbruik * water_prijs) | round(2) }}
-          # Voeg dit toe aan je dashboard_sensors.yaml
-
-    - name: "Water verbruik vandaag direct"
-      unique_id: water_verbruik_vandaag_direct
-      device_class: water
-      unit_of_measurement: "m³"
-      state_class: total
-      icon: mdi:water
-      state: >
-        {% set current = states('sensor.watermeter_totaal_water_verbruik')|float(0) %}
-        {% set previous = states.sensor.watermeter_totaal_water_verbruik.last_changed.replace(hour=0, minute=0, second=0).timestamp() %}
-        {% set start_of_day = now().replace(hour=0, minute=0, second=0).timestamp() %}
-        {% if previous < start_of_day %}
-          {% set start_value = state_attr('sensor.watermeter_totaal_water_verbruik', 'last_reset_value')|float(0) %}
-          {{ (current - start_value)|round(2) if current > start_value else 0 }}
-        {% else %}
-          0
-        {% endif %}
-        
-        
