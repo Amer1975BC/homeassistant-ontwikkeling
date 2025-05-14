@@ -34,6 +34,39 @@ sensor:
         "id": 1
       }
     value_template: "{{ value_json.result[0].lastvalue }}"
+    
+  # Template sensoren voor waterverbruik berekeningen
+  - platform: template
+    sensors:
+      water_verbruik_vandaag:
+        friendly_name: "Water verbruik vandaag"
+        unit_of_measurement: "m³"
+        value_template: "{{ states('sensor.water_dagelijks')|float(0) }}"
+        device_class: water
+        state_class: total
+        icon: mdi:water
+      
+      water_verbruik_vandaag_direct:
+        friendly_name: "Water verbruik vandaag direct"
+        unit_of_measurement: "m³"
+        value_template: >-
+          {% if states('sensor.watermeter_total_water_usage') != 'unknown' and 
+                states('sensor.watermeter_total_water_usage') != 'unavailable' %}
+            {{ states('sensor.watermeter_total_water_usage')|float(0) - states.sensor.watermeter_total_water_usage.attributes.get('last_reset_value', 0)|float(0) }}
+          {% else %}
+            {{ states('sensor.water_dagelijks')|float(0) }}
+          {% endif %}
+        device_class: water
+        state_class: total
+        icon: mdi:water
+      
+      water_verbruik_kosten_vandaag:
+        friendly_name: "Water verbruik kosten vandaag"
+        unit_of_measurement: "EUR"
+        value_template: "{{ (states('sensor.water_verbruik_vandaag')|float(0) * 1.35)|round(2) }}"
+        device_class: monetary
+        state_class: total
+        icon: mdi:cash
 
 # Camera configuratie
 camera:
@@ -171,14 +204,14 @@ input_number:
     icon: mdi:timer-outline
     initial: 2
     
-  water_meter:
-    name: "Waterverbruik vandaag"
+  water_kosten_per_kuub:
+    name: "Watertarief per m³"
     min: 0
-    max: 10
+    max: 5
     step: 0.01
-    unit_of_measurement: "m³"
-    icon: mdi:water
-    initial: 0.25  # Stel dit in op een gemiddelde waarde
+    unit_of_measurement: "EUR/m³"
+    icon: mdi:cash
+    initial: 1.35
 
 input_boolean:
   touchscreen_active:
@@ -289,19 +322,8 @@ energy:
     - entity_id: sensor.tv_energy_today
       unique_id: television
 
-# Integratie met warmtepomp en batterij (utility meters)
+# Integratie met batterij en waterverbruik (utility meters)
 utility_meter:
-  # Bestaande utility meters
-  warmtepomp_daily:
-    source: sensor.p1_power_consumption_watts
-    cycle: daily
-    name: Warmtepomp Dagelijks Verbruik
-  
-  warmtepomp_monthly:
-    source: sensor.p1_power_consumption_watts
-    cycle: monthly
-    name: Warmtepomp Maandelijks Verbruik
-
   # Batterij meters voor Zonneplan thuisbatterij
   batterij_energie_ontladen_vandaag:
     source: sensor.thuisbatterij_delivery_today
@@ -315,17 +337,17 @@ utility_meter:
     
   # Water verbruik meters
   water_dagelijks:
-    source: sensor.watermeter_totaal_water_verbruik
+    source:  sensor.watermeter_total_water_usage
     cycle: daily
     name: "Water Dagelijks Verbruik"
   
   water_wekelijks:
-    source: sensor.watermeter_totaal_water_verbruik
+    source:  sensor.watermeter_total_water_usage
     cycle: weekly
     name: "Water Wekelijks Verbruik"
   
   water_maandelijks:
-    source: sensor.watermeter_totaal_water_verbruik
+    source:  sensor.watermeter_total_water_usage
     cycle: monthly
     name: "Water Maandelijks Verbruik"
 
@@ -349,6 +371,12 @@ recorder:
       - sensor.thuisbatterij_soc
       - sensor.thuisbatterij_power
       - sensor.zonneplan_current_electricity_tariff
+      - sensor.water_dagelijks
+      - sensor.water_wekelijks
+      - sensor.water_maandelijks
+      - sensor.water_verbruik_vandaag
+      - sensor.water_verbruik_vandaag_direct
+      - sensor.water_verbruik_kosten_vandaag
   exclude:
     domains:
       - automation
