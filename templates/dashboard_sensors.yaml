@@ -1,8 +1,8 @@
 # dashboard_sensors.yaml - Sensoren voor dashboard
 - sensor:
     # Energy flow sensoren
-    - name: "Zonnestroom Direct Verbruikt Vandaag"
-      unique_id: zonnestroom_direct_verbruikt_vandaag
+    - name: "Zonnestroom Direct Verbruikt Vandaag (dashboard)"
+      unique_id: zonnestroom_direct_verbruikt_vandaag_dashboard
       unit_of_measurement: "kWh"
       state_class: total
       device_class: energy

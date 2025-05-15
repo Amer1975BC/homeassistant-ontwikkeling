@@ -2,37 +2,38 @@
 
 # Logging
 LOG_FILE="/config/git-backup.log"
-echo "$(date '+%Y-%m-%d %H:%M:%S') - Start Git backup" >> $LOG_FILE
+TIMESTAMP="$(date '+%Y-%m-%d %H:%M:%S')"
+echo "$TIMESTAMP - 🔄 Start Git backup" >> "$LOG_FILE"
 
 # Naar config directory gaan
 cd /config || {
-    echo "FOUT: Kan niet navigeren naar /config directory" >> $LOG_FILE
+    echo "$TIMESTAMP - ❌ FOUT: Kan niet navigeren naar /config directory" >> "$LOG_FILE"
     exit 1
 }
 
-# Ignoreer submodule wijzigingen
+# Instellingen: submodules negeren
 git config submodule.recurse false
 
-# Voeg alle bestanden toe behalve submodules
+# Voeg wijzigingen toe (alle bestanden behalve submodules)
 git add -A :/
 
 # Check of er wijzigingen zijn
 if git diff --staged --quiet; then
-    echo "$(date '+%Y-%m-%d %H:%M:%S') - Geen wijzigingen gevonden om te backuppen" >> $LOG_FILE
+    echo "$TIMESTAMP - ℹ️ Geen wijzigingen gevonden om te backuppen" >> "$LOG_FILE"
 else
-    # Commit wijzigingen
-    git commit -m "Automatische backup $(date '+%Y-%m-%d %H:%M:%S')" && {
-        echo "$(date '+%Y-%m-%d %H:%M:%S') - Wijzigingen succesvol gecommit" >> $LOG_FILE
-        
+    COMMIT_MSG="Automatische backup $TIMESTAMP"
+    if git commit -m "$COMMIT_MSG"; then
+        echo "$TIMESTAMP - ✅ Wijzigingen succesvol gecommit" >> "$LOG_FILE"
+
         # Push naar repository
-        if git push; then
-            echo "$(date '+%Y-%m-%d %H:%M:%S') - Backup succesvol gepusht naar repository" >> $LOG_FILE
+        if git push >> "$LOG_FILE" 2>&1; then
+            echo "$TIMESTAMP - ✅ Backup succesvol gepusht naar repository" >> "$LOG_FILE"
         else
-            echo "$(date '+%Y-%m-%d %H:%M:%S') - WAARSCHUWING: Push mislukt, maar commit is lokaal opgeslagen" >> $LOG_FILE
+            echo "$TIMESTAMP - ⚠️ WAARSCHUWING: Push mislukt, commit is lokaal opgeslagen" >> "$LOG_FILE"
         fi
-    } || {
-        echo "$(date '+%Y-%m-%d %H:%M:%S') - WAARSCHUWING: Commit is mislukt" >> $LOG_FILE
-    }
+    else
+        echo "$TIMESTAMP - ⚠️ WAARSCHUWING: Commit is mislukt" >> "$LOG_FILE"
+    fi
 fi
 
-echo "$(date '+%Y-%m-%d %H:%M:%S') - Git backup voltooid" >> $LOG_FILE
+echo "$TIMESTAMP - ✅ Git backup voltooid" >> "$LOG_FILE"

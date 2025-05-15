@@ -292,6 +292,12 @@ utility_meter:
     source: sensor.watermeter_total_water_usage
     cycle: monthly
     name: "Water Maandelijks Verbruik"
+    
+  dagelijks_totaal_verbruik:
+    source: sensor.zonneplan_electricity_consumption_today  # ← vervang dit met jouw kWh-bronsensor
+    cycle: daily
+    name: "Dagelijks Totaal Verbruik"
+
 
 # Recorder en historie configuratie
 recorder:
