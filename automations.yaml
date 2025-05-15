@@ -308,24 +308,19 @@
   alias: Melding Zeer Lage Energieprijzen
   description: Stuurt een notificatie wanneer de energieprijs negatief of zeer laag
     is
-  trigger:
-  - platform: time_pattern
-    minutes: '0'
-  condition:
+  triggers:
+  - minutes: '0'
+    trigger: time_pattern
+  conditions:
   - condition: template
     value_template: "{% set current_hour = now().hour %} {% set prices_today = state_attr('sensor.zonneplan_current_electricity_tariff',
       'prices_today') %} {% if not prices_today %}\n  {{ false }}\n{% else %}\n  {%
       set current_price = prices_today[current_hour] | float %}\n  {{ current_price
       < 0.03 }}\n{% endif %}\n"
-  action:
-  - service: notify.mobile_app
+  actions:
+  - action: notify.mobile_app_iphone_amer
     data:
-      title: Zeer Lage Energieprijs!
-      message: 'De energieprijs is nu zeer laag (€{{ state_attr(''sensor.zonneplan_current_electricity_tariff'',
-        ''prices_today'')[now().hour] }}/kWh). Perfect moment om energieverbruikende
-        apparaten te gebruiken!
-
-        '
+      message: Lage energieprijs
   mode: single
 - id: wasmachine_goedkoopste_uur
   alias: Wasmachine Start tijdens Goedkoopste Uur
@@ -353,25 +348,14 @@
   alias: Vaatwasser Optimale Starttijd
   description: Bepaalt het beste moment om de vaatwasser te starten voor een programma
     van 3 uur
-  trigger:
-  - platform: time
-    at: '17:00:00'
-  condition: []
-  action:
-  - service: notify.mobile_app
+  triggers:
+  - at: '17:00:00'
+    trigger: time
+  conditions: []
+  actions:
+  - action: notify.mobile_app_iphone_amer
     data:
-      title: Vaatwasser Advies
-      message: "{% set prices_today = state_attr('sensor.zonneplan_current_electricity_tariff',
-        'prices_today') %} {% if not prices_today %}\n  Geen prijsinformatie beschikbaar.\n{%
-        else %}\n  {% set hours_left = range(now().hour, 24) | list %}\n  {% set min_avg
-        = 999 %}\n  {% set best_start = 0 %}\n  {% for start_hour in hours_left %}\n
-        \   {% if start_hour + 3 <= 24 %}\n      {% set window_prices = [\n        prices_today[start_hour],\n
-        \       prices_today[start_hour + 1],\n        prices_today[start_hour + 2]\n
-        \     ] %}\n      {% set avg_price = (window_prices | sum) / 3 %}\n      {%
-        if avg_price < min_avg %}\n        {% set min_avg = avg_price %}\n        {%
-        set best_start = start_hour %}\n      {% endif %}\n    {% endif %}\n  {% endfor
-        %}\n  Beste tijd om de vaatwasser te starten: {{ best_start }}:00. \n  Gemiddelde
-        prijs over 3 uur: €{{ min_avg | round(4) }}/kWh.\n{% endif %}\n"
+      message: Vaatwasser niet vergeten
   mode: single
 - id: git_backup_automation
   alias: Git Backup bij configuratiewijziging
