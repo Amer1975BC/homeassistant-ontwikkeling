@@ -1,7 +1,6 @@
 - sensor:
     # Sensors - Batterijstatistieken
     - name: "Batterij Efficiëntie Percentage"
-      unique_id: batterij_efficientie_percentage
       unit_of_measurement: "%"
       state_class: measurement
       state: >
@@ -15,7 +14,6 @@
     
     # Sensors - Verbeterde batterijvermogensberekeningen
     - name: "Batterij Laadvermogen"
-      unique_id: batterij_laadvermogen
       unit_of_measurement: "W"
       state_class: measurement
       device_class: power
@@ -28,7 +26,6 @@
         {% endif %}
         
     - name: "Batterij Ontlading Vermogen"
-      unique_id: batterij_ontlading_vermogen
       unit_of_measurement: "W"
       state_class: measurement
       device_class: power
@@ -42,7 +39,6 @@
         
     # Batterij rendement in euro's
     - name: "Batterij Rendement Euro"
-      unique_id: batterij_rendement_euro
       unit_of_measurement: "EUR"
       state_class: total
       device_class: monetary
@@ -58,12 +54,8 @@
           {{ (ontladen * prijs_per_kwh) | round(2) }}
         {% endif %}
 
-    
-
-        
-    # Thuisbatterij Laadschema
+        # Thuisbatterij Laadschema
     - name: "Thuisbatterij Laadschema"
-      unique_id: thuisbatterij_laadschema
       icon: mdi:calendar-clock
       state: >
         {% if is_state('automation.batterij_dynamisch_laden', 'on') %}

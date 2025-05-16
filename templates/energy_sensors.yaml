@@ -1,7 +1,6 @@
 - sensor:
     # Energie-gerelateerde sensoren
     - name: "Solar Vermogen Totaal"
-      unique_id: solar_power_total
       unit_of_measurement: "W"
       device_class: power
       state_class: measurement
@@ -13,7 +12,6 @@
         {{ (growatt + envoy + solaredge_w + solaredge_kw) | round(0) }}
 
     - name: "Huisverbruik van Zon"
-      unique_id: huisverbruik_van_zon
       unit_of_measurement: "W"
       device_class: power
       state_class: measurement
@@ -24,7 +22,6 @@
         ] | min }}
 
     - name: "Huisverbruik van Net"
-      unique_id: huisverbruik_van_net
       unit_of_measurement: "W"
       device_class: power
       state_class: measurement
@@ -38,7 +35,6 @@
         {{ [via_net, 0] | max }}
 
     - name: "Huisverbruik van Batterij"
-      unique_id: huisverbruik_van_batterij
       unit_of_measurement: "W"
       device_class: power
       state_class: measurement
@@ -49,7 +45,6 @@
         {{ [diff, 0] | max }}
 
     - name: "Teruglevering naar Net"
-      unique_id: teruglevering_naar_net
       unit_of_measurement: "W"
       device_class: power
       state_class: measurement
@@ -58,7 +53,6 @@
         {{ [net_export, 0] | max }}
 
     - name: "Zelfvoorzieningspercentage"
-      unique_id: zelfvoorzieningspercentage
       unit_of_measurement: "%"
       device_class: battery
       state_class: measurement
@@ -75,7 +69,6 @@
         {% endif %}
 
     - name: "Energie Balans Controle"
-      unique_id: energie_balans_controle
       unit_of_measurement: "W"
       device_class: power
       state_class: measurement
@@ -87,7 +80,6 @@
         
     # Sensors - Kostenberekeningen
     - name: "Kosten Stroom Vandaag"
-      unique_id: kosten_stroom_vandaag
       unit_of_measurement: "EUR"
       state_class: total
       device_class: monetary
@@ -97,7 +89,6 @@
         {{ (consumptie * prijs) | round(2) }}
 
     - name: "Besparing Zonnepanelen Vandaag"
-      unique_id: besparing_zonnepanelen_vandaag
       unit_of_measurement: "EUR"
       state_class: total
       device_class: monetary
@@ -109,7 +100,6 @@
         {{ ((zelf_verbruikt * prijs_inkoop) + (teruglevering * prijs_teruglevering)) | round(2) }}
 
     - name: "Dagelijks Zon Verbruik Correct"
-      unique_id: dagelijks_zon_verbruik_correct
       unit_of_measurement: "kWh"
       state_class: total
       device_class: energy
@@ -121,7 +111,6 @@
 
     # Sensors - Energie Stroomrichting
     - name: "Energie Stroomrichting"
-      unique_id: energie_stroomrichting
       icon: mdi:transmission-tower-export
       state: >
         {% set pv_power = states('sensor.solar_vermogen_totaal')|float(0) %}

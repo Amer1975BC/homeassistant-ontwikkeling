@@ -2,7 +2,6 @@
 - sensor:
     # Energy flow sensoren
     - name: "Zonnestroom Direct Verbruikt Vandaag (dashboard)"
-      unique_id: zonnestroom_direct_verbruikt_vandaag_dashboard
       unit_of_measurement: "kWh"
       state_class: total
       device_class: energy
@@ -16,7 +15,6 @@
         {% endif %}
       
     - name: "Zonnestroom Naar Batterij Vandaag"
-      unique_id: zonnestroom_naar_batterij_vandaag
       unit_of_measurement: "kWh"
       state_class: total
       device_class: energy
@@ -24,7 +22,6 @@
         {{ states('sensor.thuisbatterij_today')|float(0)|round(2) }}
       
     - name: "Teruglevering Vandaag"
-      unique_id: teruglevering_vandaag
       unit_of_measurement: "kWh"
       state_class: total
       device_class: energy
@@ -32,7 +29,6 @@
         {{ states('sensor.zonneplan_electricity_returned_today')|float(0)|round(2) }}
       
     - name: "Batterij Naar Huis Vandaag"
-      unique_id: batterij_naar_huis_vandaag
       unit_of_measurement: "kWh"
       state_class: total
       device_class: energy
@@ -40,7 +36,6 @@
         {{ states('sensor.thuisbatterij_delivery_today')|float(0)|round(2) }}
       
     - name: "Netstroom Verbruikt Vandaag"
-      unique_id: netstroom_verbruikt_vandaag
       unit_of_measurement: "kWh"
       state_class: total
       device_class: energy
@@ -48,7 +43,6 @@
         {{ states('sensor.zonneplan_electricity_consumption_today')|float(0)|round(2) }}
     # Zelfvoorziening percentage
     - name: "Percentage Zelfvoorziening Elektriciteit"
-      unique_id: percentage_zelfvoorziening_elektriciteit
       unit_of_measurement: "%"
       state_class: measurement
       icon: mdi:solar-power
@@ -65,7 +59,6 @@
         {% endif %}
     # Utility sensoren
     - name: "Gas Verbruik Vandaag"
-      unique_id: gas_verbruik_vandaag
       unit_of_measurement: "m³"
       state_class: total
       device_class: gas
@@ -73,7 +66,6 @@
         {{ states('sensor.zonneplan_gas_consumption_today')|float(0)|round(2) }}
         
     - name: "Water Verbruik Vandaag"
-      unique_id: water_verbruik_vandaag
       unit_of_measurement: "m³"
       state_class: total
       device_class: water
@@ -88,7 +80,6 @@
         
     # Kosten sensoren
     - name: "Gas Verbruik Kosten Vandaag" 
-      unique_id: gas_verbruik_kosten_vandaag
       unit_of_measurement: "EUR"
       state_class: total
       device_class: monetary
@@ -100,7 +91,6 @@
         {{ (verbruik * gas_prijs) | round(2) }}
     
     - name: "Water Verbruik Kosten Vandaag"
-      unique_id: water_verbruik_kosten_vandaag
       unit_of_measurement: "EUR"
       state_class: total
       device_class: monetary

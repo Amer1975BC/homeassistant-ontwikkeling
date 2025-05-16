@@ -1,6 +1,5 @@
 sensor:
   - name: "Stroomprijzen Morgen Data"
-    unique_id: stroomprijzen_morgen_data
     state: >
       {% if states('sensor.zonneplan_forecast_tariff_hour_1') != 'unknown' %}
         {{ states('sensor.zonneplan_forecast_tariff_hour_1')|float(0) }}

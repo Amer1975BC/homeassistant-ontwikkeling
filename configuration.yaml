@@ -226,43 +226,43 @@ notify:
 
 # Energiedashboard configuratie
 energy:
-  energy_sources:
-    - type: grid
-      flow_from:
-        - entity_id: sensor.zonneplan_electricity_consumption_low
-          unique_id: grid_consumption_low
-        - entity_id: sensor.zonneplan_electricity_consumption_high
-          unique_id: grid_consumption_high
-      flow_to:
-        - entity_id: sensor.zonneplan_electricity_returned_low
-          unique_id: grid_return_low
-        - entity_id: sensor.zonneplan_electricity_returned_high
-          unique_id: grid_return_high
-      cost_adjustment_day: 0.22
-      cost_adjustment_night: 0.22
-    - type: solar
-      flow_from:
-        - entity_id: sensor.sensor_totale_pv_energie_vandaag
-          unique_id: solar_production
-    - type: battery
-      flow_from:
-        - entity_id: sensor.thuisbatterij_delivery_today
-          unique_id: battery_from
-      flow_to:
-        - entity_id: sensor.thuisbatterij_today
-          unique_id: battery_to
+#  energy_sources:
+#    - type: grid
+#      flow_from:
+#        - entity_id: sensor.zonneplan_electricity_consumption_low
+#          unique_id: grid_consumption_low
+#        - entity_id: sensor.zonneplan_electricity_consumption_high
+#          unique_id: grid_consumption_high
+#      flow_to:
+#        - entity_id: sensor.zonneplan_electricity_returned_low
+#          unique_id: grid_return_low
+#        - entity_id: sensor.zonneplan_electricity_returned_high
+#          unique_id: grid_return_high
+#      cost_adjustment_day: 0.22
+#      cost_adjustment_night: 0.22
+#    - type: solar
+#      flow_from:
+#        - entity_id: sensor.sensor_totale_pv_energie_vandaag
+#          unique_id: solar_production
+#    - type: battery
+#      flow_from:
+#        - entity_id: sensor.thuisbatterij_delivery_today
+#          unique_id: battery_from
+#      flow_to:
+#        - entity_id: sensor.thuisbatterij_today
+#          unique_id: battery_to
 
-  device_consumption:
-    - entity_id: sensor.wasmachine_energy_today
-      unique_id: washing_machine
-    - entity_id: sensor.droogkast_energy_today
-      unique_id: dryer
-    - entity_id: sensor.vaatwasser_energy_today
-      unique_id: dishwasher
-    - entity_id: sensor.koelkast_energy_today
-      unique_id: refrigerator
-    - entity_id: sensor.tv_energy_today
-      unique_id: television
+#  device_consumption:
+#    - entity_id: sensor.wasmachine_energy_today
+#      unique_id: washing_machine
+#    - entity_id: sensor.droogkast_energy_today
+#      unique_id: dryer
+#    - entity_id: sensor.vaatwasser_energy_today
+#      unique_id: dishwasher
+#    - entity_id: sensor.koelkast_energy_today
+#      unique_id: refrigerator
+#    - entity_id: sensor.tv_energy_today
+#      unique_id: television
 
 # Integratie met batterij en waterverbruik (utility meters)
 utility_meter:

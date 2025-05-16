@@ -1,7 +1,6 @@
 template:
   - sensor:
       - name: "Stroomprijs Histogram"
-        unique_id: stroomprijs_histogram
         icon: mdi:chart-histogram
         state: >
           {% set forecast = state_attr('sensor.zonneplan_current_electricity_tariff', 'forecast') %}

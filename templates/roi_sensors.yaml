@@ -1,7 +1,6 @@
 - sensor:
     # ROI (Return on Investment) sensoren voor zonnepanelen
     - name: "Zonnepanelen ROI Percentage"
-      unique_id: zonnepanelen_roi_percentage
       unit_of_measurement: "%"
       state_class: measurement
       icon: mdi:percent
@@ -15,7 +14,6 @@
         {% endif %}
 
     - name: "Zonnepanelen Totale Besparing"
-      unique_id: zonnepanelen_totale_besparing
       unit_of_measurement: "EUR"
       state_class: total
       device_class: monetary
@@ -26,7 +24,6 @@
         {{ (daily_saving * days_since_install) | round(2) }}
 
     - name: "Zonnepanelen Terugverdientijd Jaren"
-      unique_id: zonnepanelen_terugverdientijd_jaren
       unit_of_measurement: "jaar"
       state_class: measurement
       icon: mdi:calendar-clock
@@ -41,7 +38,6 @@
 
     # ROI (Return on Investment) sensoren voor thuisbatterij
     - name: "Thuisbatterij ROI Percentage"
-      unique_id: thuisbatterij_roi_percentage
       unit_of_measurement: "%"
       state_class: measurement
       icon: mdi:percent
@@ -55,7 +51,6 @@
         {% endif %}
 
     - name: "Thuisbatterij Totale Besparing"
-      unique_id: thuisbatterij_totale_besparing
       unit_of_measurement: "EUR"
       state_class: total
       device_class: monetary
@@ -66,7 +61,6 @@
         {{ (daily_saving * days_since_install) | round(2) }}
 
     - name: "Thuisbatterij Terugverdientijd Jaren"
-      unique_id: thuisbatterij_terugverdientijd_jaren
       unit_of_measurement: "jaar"
       state_class: measurement
       icon: mdi:calendar-clock
@@ -81,7 +75,6 @@
 
     # Totaal energiesysteem ROI
     - name: "Totale Energiesysteem ROI"
-      unique_id: totale_energiesysteem_roi
       unit_of_measurement: "%"
       state_class: measurement
       icon: mdi:percent
@@ -100,7 +93,6 @@
 
     # Maandelijkse energie kosten en besparingen
     - name: "Monthly Energy Cost Net"
-      unique_id: monthly_energy_cost_net
       unit_of_measurement: "EUR"
       state_class: total
       device_class: monetary
@@ -114,7 +106,6 @@
         {{ cost | round(2) }}
 
     - name: "Monthly Energy Savings"
-      unique_id: monthly_energy_savings
       unit_of_measurement: "EUR"
       state_class: total
       device_class: monetary

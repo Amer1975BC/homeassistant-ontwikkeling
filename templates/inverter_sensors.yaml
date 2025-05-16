@@ -1,7 +1,6 @@
 - sensor:
     # Sensors - Inverterstatistieken
     - name: "Percentage Opwek Solaredge"
-      unique_id: percentage_opwek_solaredge
       unit_of_measurement: "%"
       state_class: measurement
       state: >
@@ -14,7 +13,6 @@
         {% endif %}
 
     - name: "Percentage Opwek Envoy"
-      unique_id: percentage_opwek_envoy
       unit_of_measurement: "%"
       state_class: measurement
       state: >
@@ -27,7 +25,6 @@
         {% endif %}
 
     - name: "Percentage Opwek Growatt"
-      unique_id: percentage_opwek_growatt
       unit_of_measurement: "%"
       state_class: measurement
       state: >

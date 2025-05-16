@@ -1,7 +1,6 @@
 - sensor:
     # Beste moment om de batterij op te laden (goedkoopste 3 uur periode)
     - name: "Beste Laadtijd Batterij"
-      unique_id: beste_laadtijd_batterij
       icon: mdi:battery-charging
       state: >
         {% set prices = state_attr('sensor.zonneplan_current_electricity_tariff', 'prices_today') %}
@@ -37,7 +36,6 @@
 
     # Verbruik per dagdeel voor radar chart
     - name: "Verbruik Per Dagdeel"
-      unique_id: verbruik_per_dagdeel
       unit_of_measurement: "kWh" 
       state: >
         {% set total = states('sensor.connect_energiemeter_electricity_consumption_daily')|float(0) %}
@@ -80,7 +78,6 @@
           
     # Stroomprijs histogram voor tariefverdeling visualisatie
     - name: "Stroomprijs Histogram"
-      unique_id: stroomprijs_histogram
       icon: mdi:chart-histogram
       state: >
         {% set prices = state_attr('sensor.zonneplan_current_electricity_tariff', 'prices_today') %}

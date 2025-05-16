@@ -1,7 +1,6 @@
 - sensor:
     # Goedkoopste uur vandaag
     - name: "Goedkoopste Uur Vandaag"
-      unique_id: goedkoopste_uur_vandaag
       icon: mdi:clock-time-three-outline
       state: >
         {% set prices = state_attr('sensor.zonneplan_current_electricity_tariff', 'prices_today') %}
@@ -21,7 +20,6 @@
 
     # Goedkoopste 3 opeenvolgende uren vandaag (voor langlopende apparaten)
     - name: "Goedkoopste 3 Uren Vandaag"
-      unique_id: goedkoopste_3_uren_vandaag
       icon: mdi:clock-time-three-outline
       state: >
         {% set prices = state_attr('sensor.zonneplan_current_electricity_tariff', 'prices_today') %}
@@ -50,7 +48,6 @@
 
     # Goedkoopste uur morgen
     - name: "Goedkoopste Uur Morgen"
-      unique_id: goedkoopste_uur_morgen
       icon: mdi:clock-time-three-outline
       state: >
         {% set prices = state_attr('sensor.zonneplan_current_electricity_tariff', 'prices_tomorrow') %}
@@ -70,7 +67,6 @@
 
     # Goedkoopste 3 opeenvolgende uren morgen
     - name: "Goedkoopste 3 Uren Morgen"
-      unique_id: goedkoopste_3_uren_morgen
       icon: mdi:clock-time-three-outline
       state: >
         {% set prices = state_attr('sensor.zonneplan_current_electricity_tariff', 'prices_tomorrow') %}

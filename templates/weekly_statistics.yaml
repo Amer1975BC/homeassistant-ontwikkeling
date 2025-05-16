@@ -1,7 +1,6 @@
 - sensor:
     # Wekelijkse elektriciteit statistieken
     - name: "Weekly Electricity Consumption"
-      unique_id: weekly_electricity_consumption
       unit_of_measurement: "kWh"
       state_class: total
       device_class: energy
@@ -21,7 +20,6 @@
         {{ this_week | round(2) }}
 
     - name: "Weekly Forecast Consumption"
-      unique_id: weekly_forecast_consumption
       unit_of_measurement: "kWh"
       state_class: total
       device_class: energy
@@ -34,7 +32,6 @@
         {{ forecast | round(2) }}
 
     - name: "Weekly Solar Production"
-      unique_id: weekly_solar_production
       unit_of_measurement: "kWh"
       state_class: total
       device_class: energy
@@ -54,7 +51,6 @@
         {{ this_week | round(2) }}
 
     - name: "Weekly Sunshine Hours"
-      unique_id: weekly_sunshine_hours
       unit_of_measurement: "h"
       state_class: total
       icon: mdi:weather-sunny

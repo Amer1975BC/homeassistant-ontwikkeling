@@ -1,7 +1,6 @@
 - sensor:
     # Minimum en maximum prijzen morgen
     - name: "Stroomprijs Min Morgen"
-      unique_id: stroomprijs_min_morgen
       unit_of_measurement: "EUR/kWh"
       state_class: total
       device_class: monetary
@@ -15,7 +14,6 @@
         {% endif %}
 
     - name: "Stroomprijs Max Morgen"
-      unique_id: stroomprijs_max_morgen
       unit_of_measurement: "EUR/kWh"
       state_class: total
       device_class: monetary
@@ -30,7 +28,6 @@
           
     # Gemiddelde prijzen morgen
     - name: "Stroomprijs Gemiddeld Morgen"
-      unique_id: stroomprijs_gem_morgen
       unit_of_measurement: "EUR/kWh"
       state_class: total
       device_class: monetary
@@ -45,7 +42,6 @@
         
     # Prijsvoorspelling voor volgende dag
     - name: "Prijsvoorspelling"
-      unique_id: prijsvoorspelling
       icon: mdi:chart-line
       state: >
         {% set prices_tomorrow = state_attr('sensor.zonneplan_current_electricity_tariff', 'prices_tomorrow') %}

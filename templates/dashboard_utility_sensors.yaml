@@ -2,7 +2,6 @@
 - sensor:
     # Maandelijkse verbruikssensoren
     - name: "P1 Meter Gas Monthly Usage"
-      unique_id: p1_meter_gas_monthly_usage
       unit_of_measurement: "m³"
       state_class: total
       device_class: gas
@@ -17,7 +16,6 @@
         {% endif %}
     
     - name: "Water Monthly Usage"
-      unique_id: water_monthly_usage
       unit_of_measurement: "m³"
       state_class: total
       device_class: water
@@ -33,7 +31,6 @@
     
     # Temperatuur sensor
     - name: "Buiten Temperatuur"
-      unique_id: buiten_temperatuur
       unit_of_measurement: "°C"
       state_class: measurement
       device_class: temperature
@@ -47,7 +44,6 @@
     
     # Maandelijkse kosten sensoren
     - name: "Monthly Electricity Cost"
-      unique_id: monthly_electricity_cost
       unit_of_measurement: "EUR"
       state_class: total
       device_class: monetary
@@ -58,7 +54,6 @@
         {{ (verbruik * tarief)|round(2) }}
     
     - name: "Monthly Gas Cost"
-      unique_id: monthly_gas_cost
       unit_of_measurement: "EUR"
       state_class: total
       device_class: monetary
@@ -69,7 +64,6 @@
         {{ (verbruik * tarief)|round(2) }}
     
     - name: "Monthly Water Cost"
-      unique_id: monthly_water_cost
       unit_of_measurement: "EUR"
       state_class: total
       device_class: monetary

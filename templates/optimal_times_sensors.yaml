@@ -1,6 +1,5 @@
 sensor:
   - name: "Goedkoopste Uur Vandaag"
-    unique_id: goedkoopste_uur_vandaag
     icon: mdi:clock-time-eight-outline
     state: >
       {% set prices_today = [] %}
@@ -27,7 +26,6 @@ sensor:
       {% endif %}
 
   - name: "Goedkoopste 3 Uren Vandaag"
-    unique_id: goedkoopste_3_uren_vandaag
     icon: mdi:clock-time-three-outline
     state: >
       {% set prices_today = [] %}
@@ -59,19 +57,16 @@ sensor:
       {% endif %}
 
   - name: "Goedkoopste Uur Morgen"
-    unique_id: goedkoopste_uur_morgen
     icon: mdi:calendar-clock
     state: >
       Geen data beschikbaar
       
   - name: "Goedkoopste 3 Uren Morgen"
-    unique_id: goedkoopste_3_uren_morgen
     icon: mdi:calendar-clock
     state: >
       Geen data beschikbaar
       
   - name: "Beste Tijd voor Batterij Laden"
-    unique_id: beste_laadtijd_batterij
     icon: mdi:battery-charging
     state: >
       {% set prices_today = [] %}

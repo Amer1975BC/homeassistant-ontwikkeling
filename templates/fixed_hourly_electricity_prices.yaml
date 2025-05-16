@@ -1,6 +1,5 @@
 sensor:
   - name: "Dagelijkse Stroomprijsdetails"  # Naam aangepast om te matchen met wat de grafiek verwacht
-    unique_id: dagelijkse_stroomprijsdetails
     state: "{{ states('sensor.zonneplan_current_electricity_tariff')|float(0) }}"
     icon: mdi:currency-eur
     unit_of_measurement: "€/kWh"

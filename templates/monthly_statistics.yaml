@@ -1,7 +1,6 @@
 - sensor:
     # Maandelijkse elektriciteitsstatistieken
     - name: "Monthly Electricity Usage"
-      unique_id: monthly_electricity_usage
       unit_of_measurement: "kWh"
       state_class: total
       device_class: energy
@@ -15,7 +14,6 @@
         {% endif %}
 
     - name: "Monthly Solar Production"
-      unique_id: monthly_solar_production
       unit_of_measurement: "kWh"
       state_class: total
       device_class: energy
@@ -29,7 +27,6 @@
         {{ production.value | round(2) }}
 
     - name: "Monthly Grid Import"
-      unique_id: monthly_grid_import
       unit_of_measurement: "kWh"
       state_class: total
       device_class: energy
@@ -39,7 +36,6 @@
 
     # Maandelijkse gasstatistieken
     - name: "Monthly Gas Usage"
-      unique_id: monthly_gas_usage
       unit_of_measurement: "m³"
       state_class: total
       device_class: gas
@@ -48,7 +44,6 @@
         {{ states('sensor.zonneplan_gas_consumption_month') | float(0) | round(2) }}
 
     - name: "Monthly Degree Days"
-      unique_id: monthly_degree_days
       unit_of_measurement: "°C⋅day"
       state_class: measurement
       icon: mdi:thermometer
@@ -64,7 +59,6 @@
 
     # Maandelijkse waterstatistieken
     - name: "Monthly Water Usage"
-      unique_id: monthly_water_usage
       unit_of_measurement: "m³"
       state_class: total
       device_class: water

@@ -1,14 +1,17 @@
+
 template:
-  - sensor:
+  - trigger:
+      - platform: state
+        entity_id: sensor.zonneplan_electricity_consumption_today
+    sensor:
       - name: "Gemiddeld Verbruik Ochtend"
         unit_of_measurement: "kWh"
         device_class: energy
         state_class: measurement
         icon: mdi:weather-sunny
         state: >
-          {% set verbruik = states('sensor.zonneplan_electricity_consumption_today') %}
-          {% if verbruik not in ['unknown', 'unavailable', None] %}
-            {{ (verbruik | float * 0.25) | round(2) }}
+          {% if trigger.to_state.state not in ['unknown', 'unavailable', None] %}
+            {{ (trigger.to_state.state | float(0) * 0.25) | round(2) }}
           {% else %}
             0
           {% endif %}
@@ -19,9 +22,8 @@ template:
         state_class: measurement
         icon: mdi:weather-partly-cloudy
         state: >
-          {% set verbruik = states('sensor.zonneplan_electricity_consumption_today') %}
-          {% if verbruik not in ['unknown', 'unavailable', None] %}
-            {{ (verbruik | float * 0.35) | round(2) }}
+          {% if trigger.to_state.state not in ['unknown', 'unavailable', None] %}
+            {{ (trigger.to_state.state | float(0) * 0.35) | round(2) }}
           {% else %}
             0
           {% endif %}
@@ -32,9 +34,8 @@ template:
         state_class: measurement
         icon: mdi:weather-sunset
         state: >
-          {% set verbruik = states('sensor.zonneplan_electricity_consumption_today') %}
-          {% if verbruik not in ['unknown', 'unavailable', None] %}
-            {{ (verbruik | float * 0.30) | round(2) }}
+          {% if trigger.to_state.state not in ['unknown', 'unavailable', None] %}
+            {{ (trigger.to_state.state | float(0) * 0.30) | round(2) }}
           {% else %}
             0
           {% endif %}
@@ -45,9 +46,8 @@ template:
         state_class: measurement
         icon: mdi:weather-night
         state: >
-          {% set verbruik = states('sensor.zonneplan_electricity_consumption_today') %}
-          {% if verbruik not in ['unknown', 'unavailable', None] %}
-            {{ (verbruik | float * 0.10) | round(2) }}
+          {% if trigger.to_state.state not in ['unknown', 'unavailable', None] %}
+            {{ (trigger.to_state.state | float(0) * 0.10) | round(2) }}
           {% else %}
             0
           {% endif %}

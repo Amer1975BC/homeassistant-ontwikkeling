@@ -3,7 +3,6 @@
 - sensor:
     # Batterij sensoren
     - name: "Batterij lading percentage"
-      unique_id: batterij_lading_percentage
       unit_of_measurement: "%"
       state_class: measurement
       device_class: battery
@@ -16,7 +15,6 @@
         {% endif %}
     
     - name: "Batterij vermogen"
-      unique_id: batterij_vermogen
       unit_of_measurement: "W"
       state_class: measurement
       device_class: power
@@ -30,7 +28,6 @@
 
     # Vermogen sensoren
     - name: "Zonnepanelen productie vandaag"
-      unique_id: zonnepanelen_productie_vandaag
       unit_of_measurement: "kWh"
       state_class: total
       device_class: energy
@@ -43,7 +40,6 @@
         {% endif %}
 
     - name: "Netto vermogen zonnepanelen"
-      unique_id: netto_vermogen_zonnepanelen
       unit_of_measurement: "W"
       state_class: measurement
       device_class: power
@@ -56,7 +52,6 @@
         {% endif %}
 
     - name: "Huis verbruik"
-      unique_id: huis_verbruik
       unit_of_measurement: "W"
       state_class: measurement
       device_class: power
@@ -69,7 +64,6 @@
         {% endif %}
 
     - name: "Import/Export vermogen"
-      unique_id: import_export_vermogen
       unit_of_measurement: "W"
       state_class: measurement
       device_class: power

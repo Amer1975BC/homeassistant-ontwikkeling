@@ -1,12 +1,10 @@
 sensor:
   - name: "Huidig Tarief"
-    unique_id: huidig_tarief
     state: "{{ states('sensor.zonneplan_current_electricity_tariff')|float(0) }}"
     unit_of_measurement: "€/kWh"
     icon: mdi:currency-eur
     
   - name: "All-in Tarief"
-    unique_id: all_in_tarief
     state: >
       {% set base_price = states('sensor.zonneplan_current_electricity_tariff')|float(0) %}
       {% set tax = 0.11 %}  # Elektriciteitsbelasting en ODE
@@ -16,7 +14,6 @@ sensor:
     icon: mdi:currency-eur
     
   - name: "Vergelijking met Gemiddeld"
-    unique_id: vergelijking_met_gemiddeld
     state: >
       {% set current = states('sensor.zonneplan_current_electricity_tariff')|float(0) %}
       {% set avg_sensors = [
@@ -55,7 +52,6 @@ sensor:
     icon: mdi:chart-line-variant
     
   - name: "Minimum Vandaag"
-    unique_id: minimum_vandaag
     state: >
       {% set prices = [] %}
       {% set forecast_sensors = [
@@ -87,7 +83,6 @@ sensor:
     icon: mdi:arrow-down-bold
     
   - name: "Maximum Vandaag"
-    unique_id: maximum_vandaag
     state: >
       {% set prices = [] %}
       {% set forecast_sensors = [
@@ -119,7 +114,6 @@ sensor:
     icon: mdi:arrow-up-bold
     
   - name: "Gemiddeld Vandaag"
-    unique_id: gemiddeld_vandaag
     state: >
       {% set prices = [] %}
       {% set forecast_sensors = [

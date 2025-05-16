@@ -2,7 +2,6 @@
 - sensor:
     # Gas sensoren op basis van Zonneplan integratie
     - name: "P1 Meter Gas Daily Usage"
-      unique_id: p1_meter_gas_daily_usage
       unit_of_measurement: "m³"
       state_class: total
       device_class: gas
@@ -16,7 +15,6 @@
     
     # Water sensoren op basis van utility meters
     - name: "Water Daily Usage"
-      unique_id: water_daily_usage
       unit_of_measurement: "m³"
       state_class: total
       device_class: water
@@ -34,7 +32,6 @@
     
     # Zonnestroom sensoren
     - name: "Zonnestroom naar batterij vandaag"
-      unique_id: zonnestroom_naar_batterij_vandaag
       unit_of_measurement: "kWh"
       state_class: total
       device_class: energy
@@ -47,7 +44,6 @@
         {% endif %}
     
     - name: "Zonnestroom direct verbruikt vandaag"
-      unique_id: zonnestroom_direct_verbruikt_vandaag
       unit_of_measurement: "kWh"
       state_class: total
       device_class: energy
