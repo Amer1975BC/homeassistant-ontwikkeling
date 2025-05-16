@@ -1,0 +1,1274 @@
+template:
+  - sensor:
+      - name: "Zonnestroom Direct Verbruikt Vandaag (dashboard)"
+        unit_of_measurement: "kWh"
+        state_class: total
+        device_class: energy
+        state: >
+          {% set uit_zon = states('sensor.huisverbruik_van_zon')|float(0) %}
+          {% set uren = now().hour + now().minute / 60 %}
+          {% if uren > 0 %}
+            {{ (uit_zon * uren / 1000)|round(2) }}
+          {% else %}
+            0
+          {% endif %}
+      - name: "Zonnestroom Naar Batterij Vandaag"
+        unit_of_measurement: "kWh"
+        state_class: total
+        device_class: energy
+        state: >
+          {{ states('sensor.thuisbatterij_today')|float(0)|round(2) }}
+      - name: "Teruglevering Vandaag"
+        unit_of_measurement: "kWh"
+        state_class: total
+        device_class: energy
+        state: >
+          {{ states('sensor.zonneplan_electricity_returned_today')|float(0)|round(2) }}
+      - name: "Batterij Naar Huis Vandaag"
+        unit_of_measurement: "kWh"
+        state_class: total
+        device_class: energy
+        state: >
+          {{ states('sensor.thuisbatterij_delivery_today')|float(0)|round(2) }}
+      - name: "Netstroom Verbruikt Vandaag"
+        unit_of_measurement: "kWh"
+        state_class: total
+        device_class: energy
+        state: >
+          {{ states('sensor.zonneplan_electricity_consumption_today')|float(0)|round(2) }}
+      - name: "Percentage Zelfvoorziening Elektriciteit"
+        unit_of_measurement: "%"
+        state_class: measurement
+        icon: mdi:solar-power
+        state: >
+          {% set totaal_verbruik = states('sensor.zonneplan_electricity_consumption_today')|float(0) + 
+          states('sensor.dagelijks_zon_verbruik_correct')|float(0) + 
+          states('sensor.thuisbatterij_delivery_today')|float(0) %}
+          {% set zelf_opgewekt = states('sensor.dagelijks_zon_verbruik_correct')|float(0) + 
+          states('sensor.thuisbatterij_delivery_today')|float(0) %}
+          {% if totaal_verbruik > 0 %}
+            {{ (zelf_opgewekt / totaal_verbruik * 100)|round(1) }}
+          {% else %}
+            0
+          {% endif %}
+      - name: "Gas Verbruik Vandaag"
+        unit_of_measurement: "m³"
+        state_class: total
+        device_class: gas
+        state: >
+          {{ states('sensor.zonneplan_gas_consumption_today')|float(0)|round(2) }}
+      - name: "Water Verbruik Vandaag"
+        unit_of_measurement: "m³"
+        state_class: total
+        device_class: water
+        icon: mdi:water
+        state: >
+          {% if states('sensor.water_dagelijks') != 'unknown' and states('sensor.water_dagelijks') != 'unavailable' %}
+            {{ states('sensor.water_dagelijks')|float(0)|round(2) }}
+          {% else %}
+            {% set waterverbruik = states('input_number.water_meter')|float(0) %}
+            {{ waterverbruik|round(2) }}
+          {% endif %}
+      - name: "Gas Verbruik Kosten Vandaag" 
+        unit_of_measurement: "EUR"
+        state_class: total
+        device_class: monetary
+        icon: mdi:cash
+        state: >
+          {% set verbruik = states('sensor.gas_verbruik_vandaag')|float(0) %}
+          {# Pas dit aan naar de werkelijke gasprijs #}
+          {% set gas_prijs = 0.85 %}  
+          {{ (verbruik * gas_prijs) | round(2) }}
+      - name: "Water Verbruik Kosten Vandaag"
+        unit_of_measurement: "EUR"
+        state_class: total
+        device_class: monetary
+        icon: mdi:cash
+        state: >
+          {% set verbruik = states('sensor.water_verbruik_vandaag')|float(0) %}
+          {% set water_prijs = states('input_number.water_kosten_per_kuub')|float(1.35) %}  
+          {{ (verbruik * water_prijs) | round(2) }}
+      - name: "Batterij Efficiëntie Percentage"
+        unit_of_measurement: "%"
+        state_class: measurement
+        state: >
+          {% set laden = states('sensor.thuisbatterij_today')|float(0.1) %}
+          {% set ontladen = states('sensor.thuisbatterij_delivery_today')|float(0) %}
+          {% if laden > 0 %}
+            {{ ((ontladen / laden) * 100) | round(1) }}
+          {% else %}
+            0
+          {% endif %}
+      - name: "Batterij Laadvermogen"
+        unit_of_measurement: "W"
+        state_class: measurement
+        device_class: power
+        state: >
+          {% set power = states('sensor.thuisbatterij_power')|float(0) %}
+          {% if power < 0 %}
+            {{ (power * -1) | round(0) }}
+          {% else %}
+            0
+          {% endif %}
+      - name: "Batterij Ontlading Vermogen"
+        unit_of_measurement: "W"
+        state_class: measurement
+        device_class: power
+        state: >
+          {% set power = states('sensor.thuisbatterij_power')|float(0) %}
+          {% if power > 0 %}
+            {{ power | round(0) }}
+          {% else %}
+            0
+          {% endif %}
+      - name: "Batterij Rendement Euro"
+        unit_of_measurement: "EUR"
+        state_class: total
+        device_class: monetary
+        icon: mdi:cash-plus
+        state: >
+          {% set ontladen = states('sensor.thuisbatterij_delivery_today') | float(0) %}
+          {% set prices = state_attr('sensor.zonneplan_current_electricity_tariff', 'prices_today') %}
+          {% if prices %}
+            {% set gemiddelde_prijs = prices | sum / prices | length %}
+            {{ (ontladen * gemiddelde_prijs) | round(2) }}
+          {% else %}
+            {% set prijs_per_kwh = states('input_number.energieprijs_elektriciteit') | float(0.22) %}
+            {{ (ontladen * prijs_per_kwh) | round(2) }}
+          {% endif %}
+      - name: "Thuisbatterij Laadschema"
+        icon: mdi:calendar-clock
+        state: >
+          {% if is_state('automation.batterij_dynamisch_laden', 'on') %}
+            Actief
+          {% else %}
+            Inactief
+          {% endif %}
+        attributes:
+          template: >
+            {% set prices = state_attr('sensor.zonneplan_current_electricity_tariff', 'prices_today') %}
+            {% set hours = state_attr('sensor.zonneplan_current_electricity_tariff', 'hours_priced_today') %}
+            {% set current_hour = now().hour %}
+            {% set threshold = states('input_number.low_price_threshold')|float(0.15) %}
+            {% set min_soc = states('input_number.battery_min_soc')|float(20) %}
+            {% set current_soc = states('sensor.thuisbatterij_soc')|float(0) %}
+            {% if prices and hours %}
+              {% set schedule = [] %}
+              {% for i in range(prices|length) %}
+                {% set hour_obj = as_datetime(hours[i]) %}
+                {% set hour = hour_obj.hour %}
+                {% if hour >= current_hour %}
+                  {% set price = prices[i] %}
+                  {% set status = 'Laden' if price <= threshold and current_soc < min_soc else 'Normaal' %}
+                  {% set _dummy = schedule.append({
+                    'hour': hour,
+                    'price': price|round(3),
+                    'status': status
+                  }) %}
+                {% endif %}
+              {% endfor %}
+              {{ schedule }}
+            {% else %}
+              []
+            {% endif %}
+      - name: "Batterij lading percentage"
+        unit_of_measurement: "%"
+        state_class: measurement
+        device_class: battery
+        icon: mdi:battery
+        state: >
+          {% if states('sensor.thuisbatterij_percentage') != 'unknown' and states('sensor.thuisbatterij_percentage') != 'unavailable' %}
+            {{ states('sensor.thuisbatterij_percentage')|float(0)|round(0) }}
+          {% else %}
+            0
+          {% endif %}
+      - name: "Batterij vermogen"
+        unit_of_measurement: "W"
+        state_class: measurement
+        device_class: power
+        icon: mdi:battery-charging
+        state: >
+          {% if states('sensor.thuisbatterij_power') != 'unknown' and states('sensor.thuisbatterij_power') != 'unavailable' %}
+            {{ states('sensor.thuisbatterij_power')|float(0)|round(0) }}
+          {% else %}
+            0
+          {% endif %}
+      - name: "Zonnepanelen productie vandaag"
+        unit_of_measurement: "kWh"
+        state_class: total
+        device_class: energy
+        icon: mdi:solar-panel
+        state: >
+          {% if states('sensor.zonneplan_yield_today') != 'unknown' and states('sensor.zonneplan_yield_today') != 'unavailable' %}
+            {{ states('sensor.zonneplan_yield_today')|float(0)|round(2) }}
+          {% else %}
+            0
+          {% endif %}
+      - name: "Netto vermogen zonnepanelen"
+        unit_of_measurement: "W"
+        state_class: measurement
+        device_class: power
+        icon: mdi:solar-power
+        state: >
+          {% if states('sensor.zonneplan_current_power') != 'unknown' and states('sensor.zonneplan_current_power') != 'unavailable' %}
+            {{ states('sensor.zonneplan_current_power')|float(0)|round(0) }}
+          {% else %}
+            0
+          {% endif %}
+      - name: "Huis verbruik"
+        unit_of_measurement: "W"
+        state_class: measurement
+        device_class: power
+        icon: mdi:home-lightning-bolt
+        state: >
+          {% if states('sensor.zonneplan_electricity_consumption') != 'unknown' and states('sensor.zonneplan_electricity_consumption') != 'unavailable' %}
+            {{ states('sensor.zonneplan_electricity_consumption')|float(0)|round(0) }}
+          {% else %}
+            0
+          {% endif %}
+      - name: "Import/Export vermogen"
+        unit_of_measurement: "W"
+        state_class: measurement
+        device_class: power
+        icon: mdi:transmission-tower
+        state: >
+          {% if states('sensor.zonneplan_electricity_production') != 'unknown' and states('sensor.zonneplan_electricity_production') != 'unavailable' %}
+            {{ states('sensor.zonneplan_electricity_production')|float(0)|round(0) }}
+          {% else %}
+            0
+          {% endif %}
+
+  - trigger:
+      - platform: state
+        entity_id: sensor.zonneplan_electricity_consumption_today
+    sensor:
+      - name: "Gemiddeld Verbruik Ochtend"
+        unit_of_measurement: "kWh"
+        device_class: energy
+        state_class: measurement
+        icon: mdi:weather-sunny
+        state: >
+          {% if trigger.to_state.state not in ['unknown', 'unavailable', None] %}
+            {{ (trigger.to_state.state | float(0) * 0.25) | round(2) }}
+          {% else %}
+            0
+          {% endif %}
+      - name: "Gemiddeld Verbruik Middag"
+        unit_of_measurement: "kWh"
+        device_class: energy
+        state_class: measurement
+        icon: mdi:weather-partly-cloudy
+        state: >
+          {% if trigger.to_state.state not in ['unknown', 'unavailable', None] %}
+            {{ (trigger.to_state.state | float(0) * 0.35) | round(2) }}
+          {% else %}
+            0
+          {% endif %}
+      - name: "Gemiddeld Verbruik Avond"
+        unit_of_measurement: "kWh"
+        device_class: energy
+        state_class: measurement
+        icon: mdi:weather-sunset
+        state: >
+          {% if trigger.to_state.state not in ['unknown', 'unavailable', None] %}
+            {{ (trigger.to_state.state | float(0) * 0.30) | round(2) }}
+          {% else %}
+            0
+          {% endif %}
+      - name: "Gemiddeld Verbruik Nacht"
+        unit_of_measurement: "kWh"
+        device_class: energy
+        state_class: measurement
+        icon: mdi:weather-night
+        state: >
+          {% if trigger.to_state.state not in ['unknown', 'unavailable', None] %}
+            {{ (trigger.to_state.state | float(0) * 0.10) | round(2) }}
+          {% else %}
+            0
+          {% endif %}
+
+  - sensor:
+      - name: "Solar Vermogen Totaal"
+        unit_of_measurement: "W"
+        device_class: power
+        state_class: measurement
+        state: >
+          {% set growatt = states('sensor.amer_growatt_total_output_power') | float(0) %}
+          {% set envoy = states('sensor.envoy_vermogen_in_watt') | float(0) %}
+          {% set solaredge_w = states('sensor.solaredge_huidig_vermogen') | float(0) %}
+          {% set solaredge_kw = states('sensor.solaredge_zonne_energie') | float(0) * 1000 %}
+          {{ (growatt + envoy + solaredge_w + solaredge_kw) | round(0) }}
+      - name: "Huisverbruik van Zon"
+        unit_of_measurement: "W"
+        device_class: power
+        state_class: measurement
+        state: >
+          {{ [
+            states('sensor.solar_vermogen_totaal') | float(0),
+            states('sensor.connect_energiemeter_electricity_consumption') | float(0)
+          ] | min }}
+      - name: "Huisverbruik van Net"
+        unit_of_measurement: "W"
+        device_class: power
+        state_class: measurement
+        state: >
+          {% set verbruik = states('sensor.connect_energiemeter_electricity_consumption') | float(0) %}
+          {% set uit_zon = [
+            states('sensor.solar_vermogen_totaal') | float(0),
+            verbruik
+          ] | min %}
+          {% set via_net = verbruik - uit_zon %}
+          {{ [via_net, 0] | max }}
+      - name: "Huisverbruik van Batterij"
+        unit_of_measurement: "W"
+        device_class: power
+        state_class: measurement
+        state: >
+          {% set verbruik = states('sensor.connect_energiemeter_electricity_consumption') | float(0) %}
+          {% set net = states('sensor.connect_energiemeter_electricity_production') | float(0) %}
+          {% set diff = verbruik - net %}
+          {{ [diff, 0] | max }}
+      - name: "Teruglevering naar Net"
+        unit_of_measurement: "W"
+        device_class: power
+        state_class: measurement
+        state: >
+          {% set net_export = states('sensor.connect_energiemeter_electricity_production') | float(0) %}
+          {{ [net_export, 0] | max }}
+      - name: "Zelfvoorzieningspercentage"
+        unit_of_measurement: "%"
+        device_class: battery
+        state_class: measurement
+        state: >
+          {% set verbruik = states('sensor.connect_energiemeter_electricity_consumption') | float(0) %}
+          {% set uit_zon = [
+            states('sensor.solar_vermogen_totaal') | float(0),
+            verbruik
+          ] | min %}
+          {% if verbruik > 0 %}
+            {{ (uit_zon / verbruik * 100) | round(1) }}
+          {% else %}
+            0
+          {% endif %}
+      - name: "Energie Balans Controle"
+        unit_of_measurement: "W"
+        device_class: power
+        state_class: measurement
+        state: >
+          {% set solar = states('sensor.solar_vermogen_totaal') | float(0) %}
+          {% set net = states('sensor.connect_energiemeter_electricity_production') | float(0) %}
+          {% set verbruik = states('sensor.connect_energiemeter_electricity_consumption') | float(0) %}
+          {{ (solar + net - verbruik) | round(0) }}
+      - name: "Kosten Stroom Vandaag"
+        unit_of_measurement: "EUR"
+        state_class: total
+        device_class: monetary
+        state: >
+          {% set consumptie = states('sensor.zonneplan_electricity_consumption_today')|float(0) %}
+          {% set prijs = states('input_number.energieprijs_elektriciteit')|float(0.22) %}
+          {{ (consumptie * prijs) | round(2) }}
+      - name: "Besparing Zonnepanelen Vandaag"
+        unit_of_measurement: "EUR"
+        state_class: total
+        device_class: monetary
+        state: >
+          {% set zelf_verbruikt = states('sensor.dagelijks_zon_verbruik')|float(0) %}
+          {% set prijs_inkoop = states('input_number.energieprijs_elektriciteit')|float(0.22) %}
+          {% set teruglevering = states('sensor.zonneplan_electricity_returned_today')|float(0) %}
+          {% set prijs_teruglevering = states('input_number.terugleververgoeding')|float(0.07) %}
+          {{ ((zelf_verbruikt * prijs_inkoop) + (teruglevering * prijs_teruglevering)) | round(2) }}
+      - name: "Dagelijks Zon Verbruik Correct"
+        unit_of_measurement: "kWh"
+        state_class: total
+        device_class: energy
+        state: >
+          {% set production = states('sensor.sensor_totale_pv_energie_vandaag')|float(0) %}
+          {% set export = states('sensor.zonneplan_electricity_returned_today')|float(0) %}
+          {% set battery_charge = states('sensor.thuisbatterij_today')|float(0) %}
+          {{ [production - export - battery_charge, 0] | max | round(2) }}
+      - name: "Energie Stroomrichting"
+        icon: mdi:transmission-tower-export
+        state: >
+          {% set pv_power = states('sensor.solar_vermogen_totaal')|float(0) %}
+          {% set grid_import = states('sensor.huisverbruik_van_net')|float(0) %}
+          {% set grid_export = states('sensor.teruglevering_naar_net')|float(0) %}
+          {% set battery_charge = states('sensor.batterij_laadvermogen')|float(0) %}
+          {% set battery_discharge = states('sensor.batterij_ontlading_vermogen')|float(0) %}
+          {% set consumption = states('sensor.connect_energiemeter_electricity_consumption')|float(0) %}
+          {% if grid_export > 50 and battery_charge > 50 %}
+            Terugleveren & Batterij Laden
+          {% elif grid_export > 50 %}
+            Terugleveren
+          {% elif battery_charge > 50 %}
+            Batterij Laden
+          {% elif battery_discharge > 50 %}
+            Batterij Ontladen
+          {% elif grid_import > 50 %}
+            Netverbruik
+          {% elif pv_power > 50 %}
+            Zonneverbruik
+          {% else %}
+            Laag Verbruik
+          {% endif %}
+
+  - sensor:
+      - name: "Dynamische Energie Prijs"
+        unit_of_measurement: "EUR/kWh"
+        state_class: total
+        device_class: monetary
+        icon: mdi:currency-eur
+        state: >
+          {% if states('sensor.entsoe_average_electricity_price_today') != 'unknown' and states('sensor.entsoe_average_electricity_price_today') != 'unavailable' %}
+            {{ states('sensor.entsoe_average_electricity_price_today')|float(0)|round(4) }}
+          {% else %}
+            0.25
+          {% endif %}
+      - name: "Huidige Gas Prijs"
+        unit_of_measurement: "EUR/m³"
+        state_class: total
+        device_class: monetary
+        icon: mdi:currency-eur
+        state: >
+          {% if states('sensor.zonneplan_current_gas_tariff') != 'unknown' and states('sensor.zonneplan_current_gas_tariff') != 'unavailable' %}
+            {{ states('sensor.zonneplan_current_gas_tariff')|float(0)|round(3) }}
+          {% else %}
+            0.85
+          {% endif %}
+      - name: "Stroomprijs Huidig"
+        unit_of_measurement: "EUR/kWh"
+        state_class: total
+        device_class: monetary
+        icon: mdi:flash-circle
+        state: >
+          {% if states('sensor.entsoe_current_hour_price') != 'unknown' and states('sensor.entsoe_current_hour_price') != 'unavailable' %}
+            {{ states('sensor.entsoe_current_hour_price')|float(0)|round(4) }}
+          {% else %}
+            0.30
+          {% endif %}
+      - name: "Stroomprijs Min Vandaag"
+        unit_of_measurement: "EUR/kWh"
+        state_class: total
+        device_class: monetary
+        icon: mdi:flash-circle
+        state: >
+          {% if states('sensor.entsoe_min_price_today') != 'unknown' and states('sensor.entsoe_min_price_today') != 'unavailable' %}
+            {{ states('sensor.entsoe_min_price_today')|float(0)|round(4) }}
+          {% else %}
+            0.20
+          {% endif %}
+      - name: "Stroomprijs Max Vandaag"
+        unit_of_measurement: "EUR/kWh"
+        state_class: total
+        device_class: monetary
+        icon: mdi:flash-circle
+        state: >
+          {% if states('sensor.entsoe_max_price_today') != 'unknown' and states('sensor.entsoe_max_price_today') != 'unavailable' %}
+            {{ states('sensor.entsoe_max_price_today')|float(0)|round(4) }}
+          {% else %}
+            0.40
+          {% endif %}
+      - name: "Stroomprijs Gemiddeld Vandaag"
+        unit_of_measurement: "EUR/kWh"
+        state_class: total
+        device_class: monetary
+        icon: mdi:flash-circle
+        state: >
+          {% if states('sensor.entsoe_average_price_today') != 'unknown' and states('sensor.entsoe_average_price_today') != 'unavailable' %}
+            {{ states('sensor.entsoe_average_price_today')|float(0)|round(4) }}
+          {% else %}
+            0.30
+          {% endif %}
+      - name: "Zonneplan All In Prijs"
+        unit_of_measurement: "EUR/kWh"
+        state_class: total
+        device_class: monetary
+        icon: mdi:cash
+        state: >
+          {% if states('sensor.zonneplan_current_electricity_tariff') != 'unknown' and states('sensor.zonneplan_current_electricity_tariff') != 'unavailable' %}
+            {{ states('sensor.zonneplan_current_electricity_tariff')|float(0)|round(4) }}
+          {% else %}
+            0.30
+          {% endif %}
+      - name: "Laag Tarief Indicator"
+        unit_of_measurement: ""
+        state_class: measurement
+        icon: mdi:arrow-down-bold
+        state: >
+          {% set current_price = states('sensor.stroomprijs_huidig')|float(0.30) %}
+          {% set avg_price = states('sensor.stroomprijs_gemiddeld_vandaag')|float(0.30) %}
+          {% if current_price < avg_price * 0.85 %}
+            1
+          {% else %}
+            0
+          {% endif %}
+      - name: "Hoog Tarief Indicator"
+        unit_of_measurement: ""
+        state_class: measurement
+        icon: mdi:arrow-up-bold
+        state: >
+          {% set current_price = states('sensor.stroomprijs_huidig')|float(0.30) %}
+          {% set avg_price = states('sensor.stroomprijs_gemiddeld_vandaag')|float(0.30) %}
+          {% if current_price > avg_price * 1.15 %}
+            1
+          {% else %}
+            0
+          {% endif %}
+
+  - sensor:
+      - name: "Stroomprijs Histogram"
+        icon: mdi:chart-histogram
+        state: >
+          {% set forecast = state_attr('sensor.zonneplan_current_electricity_tariff', 'forecast') %}
+          {{ forecast | length if forecast else 0 }}
+        attributes:
+          histogram: >
+            {% set forecast = state_attr('sensor.zonneplan_current_electricity_tariff', 'forecast') %}
+            {% if forecast %}
+              {% set buckets = {
+                'Zeer Laag': {'min': 0, 'max': 0.15, 'count': 0},
+                'Laag': {'min': 0.15, 'max': 0.20, 'count': 0},
+                'Gemiddeld': {'min': 0.20, 'max': 0.25, 'count': 0},
+                'Hoog': {'min': 0.25, 'max': 0.30, 'count': 0},
+                'Zeer Hoog': {'min': 0.30, 'max': 99, 'count': 0}
+              } %}
+              {% for entry in forecast %}
+                {% set price = entry.electricity_price / 10000000 %}
+                {% for name, bucket in buckets.items() %}
+                  {% if bucket.min <= price < bucket.max %}
+                    {% set _ = bucket.update({'count': bucket.count + 1}) %}
+                  {% endif %}
+                {% endfor %}
+              {% endfor %}
+              {% set values = [] %}
+              {% for name in ['Zeer Laag', 'Laag', 'Gemiddeld', 'Hoog', 'Zeer Hoog'] %}
+                {% set values = values + [buckets[name].count] %}
+              {% endfor %}
+              {{ values }}
+            {% else %}
+              [0, 0, 0, 0, 0]
+            {% endif %}
+      - name: "Huidig Tarief"
+        state: "{{ states('sensor.zonneplan_current_electricity_tariff')|float(0) }}"
+        unit_of_measurement: "€/kWh"
+        icon: mdi:currency-eur
+      - name: "All-in Tarief"
+        state: >
+          {% set base_price = states('sensor.zonneplan_current_electricity_tariff')|float(0) %}
+          {% set tax = 0.11 %}  # Elektriciteitsbelasting en ODE
+          {% set vat = 0.21 %}  # BTW
+          {{ (base_price * (1 + vat) + tax)|round(4) }}
+        unit_of_measurement: "€/kWh"
+        icon: mdi:currency-eur
+      - name: "Vergelijking met Gemiddeld"
+        state: >
+          {% set current = states('sensor.zonneplan_current_electricity_tariff')|float(0) %}
+          {% set avg_sensors = [
+            'sensor.zonneplan_forecast_tariff_hour_1',
+            'sensor.zonneplan_forecast_tariff_hour_2',
+            'sensor.zonneplan_forecast_tariff_hour_3',
+            'sensor.zonneplan_forecast_tariff_hour_4',
+            'sensor.zonneplan_forecast_tariff_hour_5',
+            'sensor.zonneplan_forecast_tariff_hour_6',
+            'sensor.zonneplan_forecast_tariff_hour_7',
+            'sensor.zonneplan_forecast_tariff_hour_8'
+          ] %}
+          {% set sum = 0 %}
+          {% set count = 0 %}
+          {% for sensor in avg_sensors %}
+            {% if states(sensor) != 'unknown' %}
+              {% set sum = sum + states(sensor)|float(0) %}
+              {% set count = count + 1 %}
+            {% endif %}
+          {% endfor %}
+          {% if count > 0 %}
+            {% set avg = sum / count %}
+            {% set diff = ((current - avg) / avg * 100)|round(1) %}
+            {% if diff > 0 %}
+              {{ diff }}% duurder dan gemiddeld
+            {% elif diff < 0 %}
+              {{ diff|abs }}% goedkoper dan gemiddeld
+            {% else %}
+              Gelijk aan gemiddeld
+            {% endif %}
+          {% else %}
+            Niet beschikbaar
+          {% endif %}
+        icon: mdi:chart-line-variant
+      - name: "Minimum Vandaag"
+        state: >
+          {% set prices = [] %}
+          {% set forecast_sensors = [
+            'sensor.zonneplan_forecast_tariff_hour_1',
+            'sensor.zonneplan_forecast_tariff_hour_2',
+            'sensor.zonneplan_forecast_tariff_hour_3',
+            'sensor.zonneplan_forecast_tariff_hour_4',
+            'sensor.zonneplan_forecast_tariff_hour_5',
+            'sensor.zonneplan_forecast_tariff_hour_6',
+            'sensor.zonneplan_forecast_tariff_hour_7',
+            'sensor.zonneplan_forecast_tariff_hour_8'
+          ] %}
+          {% set current = states('sensor.zonneplan_current_electricity_tariff')|float(0) %}
+          {% set prices = [current] %}
+          {% for sensor in forecast_sensors %}
+            {% if states(sensor) != 'unknown' %}
+              {% set prices = prices + [states(sensor)|float(0)] %}
+            {% endif %}
+          {% endfor %}
+          {% if prices|length > 0 %}
+            {{ prices|min|round(4) }}
+          {% else %}
+            Niet beschikbaar
+          {% endif %}
+        unit_of_measurement: "€/kWh"
+        icon: mdi:arrow-down-bold
+      - name: "Maximum Vandaag"
+        state: >
+          {% set prices = [] %}
+          {% set forecast_sensors = [
+            'sensor.zonneplan_forecast_tariff_hour_1',
+            'sensor.zonneplan_forecast_tariff_hour_2',
+            'sensor.zonneplan_forecast_tariff_hour_3',
+            'sensor.zonneplan_forecast_tariff_hour_4',
+            'sensor.zonneplan_forecast_tariff_hour_5',
+            'sensor.zonneplan_forecast_tariff_hour_6',
+            'sensor.zonneplan_forecast_tariff_hour_7',
+            'sensor.zonneplan_forecast_tariff_hour_8'
+          ] %}
+          {% set current = states('sensor.zonneplan_current_electricity_tariff')|float(0) %}
+          {% set prices = [current] %}
+          {% for sensor in forecast_sensors %}
+            {% if states(sensor) != 'unknown' %}
+              {% set prices = prices + [states(sensor)|float(0)] %}
+            {% endif %}
+          {% endfor %}
+          {% if prices|length > 0 %}
+            {{ prices|max|round(4) }}
+          {% else %}
+            Niet beschikbaar
+          {% endif %}
+        unit_of_measurement: "€/kWh"
+        icon: mdi:arrow-up-bold
+      - name: "Gemiddeld Vandaag"
+        state: >
+          {% set prices = [] %}
+          {% set forecast_sensors = [
+            'sensor.zonneplan_forecast_tariff_hour_1',
+            'sensor.zonneplan_forecast_tariff_hour_2',
+            'sensor.zonneplan_forecast_tariff_hour_3',
+            'sensor.zonneplan_forecast_tariff_hour_4',
+            'sensor.zonneplan_forecast_tariff_hour_5',
+            'sensor.zonneplan_forecast_tariff_hour_6',
+            'sensor.zonneplan_forecast_tariff_hour_7',
+            'sensor.zonneplan_forecast_tariff_hour_8'
+          ] %}
+          {% set current = states('sensor.zonneplan_current_electricity_tariff')|float(0) %}
+          {% set prices = [current] %}
+          {% for sensor in forecast_sensors %}
+            {% if states(sensor) != 'unknown' %}
+              {% set prices = prices + [states(sensor)|float(0)] %}
+            {% endif %}
+          {% endfor %}
+          {% if prices|length > 0 %}
+            {# Bereken gemiddelde #}
+            {% set sum = 0 %}
+            {% for price in prices %}
+              {% set sum = sum + price %}
+            {% endfor %}
+            {{ (sum / prices|length)|round(4) }}
+          {% else %}
+            Niet beschikbaar
+          {% endif %}
+        unit_of_measurement: "€/kWh"
+        icon: mdi:calculator
+      - name: "Goedkoopste Uur Vandaag"
+        icon: mdi:clock-time-three-outline
+        state: >
+          {% set prices = state_attr('sensor.zonneplan_current_electricity_tariff', 'prices_today') %}
+          {% set hours = state_attr('sensor.zonneplan_current_electricity_tariff', 'hours_priced_today') %}
+          {% if prices and hours %}
+            {% set min_price = prices | min %}
+            {% set min_index = prices.index(min_price) %}
+            {% if hours[min_index] %}
+              {% set hour = hours[min_index][11:13] | int %}
+              {{ hour }}:00 - {{ (hour + 1) }}:00 (€{{ min_price | round(3) }}/kWh)
+            {% else %}
+              Onbekend
+            {% endif %}
+          {% else %}
+            Geen data beschikbaar
+          {% endif %}
+      - name: "Goedkoopste 3 Uren Vandaag"
+        icon: mdi:clock-time-three-outline
+        state: >
+          {% set prices = state_attr('sensor.zonneplan_current_electricity_tariff', 'prices_today') %}
+          {% set hours = state_attr('sensor.zonneplan_current_electricity_tariff', 'hours_priced_today') %}
+          {% if prices and hours and prices|length >= 3 %}
+            {% set min_avg = 999 %}
+            {% set best_start = 0 %}
+            {% for i in range(prices|length - 2) %}
+              {% set window_prices = [prices[i], prices[i+1], prices[i+2]] %}
+              {% set avg_price = (window_prices | sum) / 3 %}
+              {% if avg_price < min_avg %}
+                {% set min_avg = avg_price %}
+                {% set best_start = i %}
+              {% endif %}
+            {% endfor %}
+            {% if hours[best_start] %}
+              {% set start_hour = hours[best_start][11:13] | int %}
+              {% set end_hour = start_hour + 3 %}
+              {{ start_hour }}:00 - {{ end_hour }}:00 (gem. €{{ min_avg | round(3) }}/kWh)
+            {% else %}
+              Onbekend
+            {% endif %}
+          {% else %}
+            Geen data beschikbaar
+          {% endif %}
+      - name: "Goedkoopste Uur Morgen"
+        icon: mdi:clock-time-three-outline
+        state: >
+          {% set prices = state_attr('sensor.zonneplan_current_electricity_tariff', 'prices_tomorrow') %}
+          {% set hours = state_attr('sensor.zonneplan_current_electricity_tariff', 'hours_priced_tomorrow') %}
+          {% if prices and hours %}
+            {% set min_price = prices | min %}
+            {% set min_index = prices.index(min_price) %}
+            {% if hours[min_index] %}
+              {% set hour = hours[min_index][11:13] | int %}
+              {{ hour }}:00 - {{ (hour + 1) }}:00 (€{{ min_price | round(3) }}/kWh)
+            {% else %}
+              Onbekend
+            {% endif %}
+          {% else %}
+            Geen data beschikbaar
+          {% endif %}
+      - name: "Goedkoopste 3 Uren Morgen"
+        icon: mdi:clock-time-three-outline
+        state: >
+          {% set prices = state_attr('sensor.zonneplan_current_electricity_tariff', 'prices_tomorrow') %}
+          {% set hours = state_attr('sensor.zonneplan_current_electricity_tariff', 'hours_priced_tomorrow') %}
+          {% if prices and hours and prices|length >= 3 %}
+            {% set min_avg = 999 %}
+            {% set best_start = 0 %}
+            {% for i in range(prices|length - 2) %}
+              {% set window_prices = [prices[i], prices[i+1], prices[i+2]] %}
+              {% set avg_price = (window_prices | sum) / 3 %}
+              {% if avg_price < min_avg %}
+                {% set min_avg = avg_price %}
+                {% set best_start = i %}
+              {% endif %}
+            {% endfor %}
+            {% if hours[best_start] %}
+              {% set start_hour = hours[best_start][11:13] | int %}
+              {% set end_hour = start_hour + 3 %}
+              {{ start_hour }}:00 - {{ end_hour }}:00 (gem. €{{ min_avg | round(3) }}/kWh)
+            {% else %}
+              Onbekend
+            {% endif %}
+          {% else %}
+            Geen data beschikbaar
+          {% endif %}
+
+  - sensor:
+      - name: "P1 Meter Gas Daily Usage"
+        unit_of_measurement: "m³"
+        state_class: total
+        device_class: gas
+        icon: mdi:fire
+        state: >
+          {% if states('sensor.zonneplan_gas_consumption_today') != 'unknown' and states('sensor.zonneplan_gas_consumption_today') != 'unavailable' %}
+            {{ states('sensor.zonneplan_gas_consumption_today')|float(0)|round(2) }}
+          {% else %}
+            {{ states('sensor.gas_verbruik_vandaag')|float(0)|round(2) }}
+          {% endif %}
+      - name: "Water Daily Usage"
+        unit_of_measurement: "m³"
+        state_class: total
+        device_class: water
+        icon: mdi:water
+        state: >
+          {% if states('sensor.water_dagelijks') != 'unknown' and states('sensor.water_dagelijks') != 'unavailable' %}
+            {{ states('sensor.water_dagelijks')|float(0)|round(2) }}
+          {% elif states('sensor.watermeter_total_water_usage') != 'unknown' and states('sensor.watermeter_total_water_usage') != 'unavailable' %}
+            {% set last_value = states.sensor.watermeter_total_water_usage.attributes.get('last_reset_value', 0)|float(0) %}
+            {% set current_value = states('sensor.watermeter_total_water_usage')|float(0) %}
+            {{ (current_value - last_value)|round(2) if current_value >= last_value else 0 }}
+          {% else %}
+            0
+          {% endif %}
+      - name: "Zonnestroom naar batterij vandaag"
+        unit_of_measurement: "kWh"
+        state_class: total
+        device_class: energy
+        icon: mdi:battery-charging
+        state: >
+          {% if states('sensor.thuisbatterij_today') != 'unknown' and states('sensor.thuisbatterij_today') != 'unavailable' %}
+            {{ states('sensor.thuisbatterij_today')|float(0)|round(2) }}
+          {% else %}
+            0
+          {% endif %}
+      - name: "Zonnestroom direct verbruikt vandaag"
+        unit_of_measurement: "kWh"
+        state_class: total
+        device_class: energy
+        icon: mdi:solar-power
+        state: >
+          {% if states('sensor.thuisbatterij_delivery_today') != 'unknown' and states('sensor.thuisbatterij_delivery_today') != 'unavailable' %}
+            {{ states('sensor.thuisbatterij_delivery_today')|float(0)|round(2) }}
+          {% else %}
+            0
+          {% endif %}
+      - name: "Percentage Opwek Solaredge"
+        unit_of_measurement: "%"
+        state_class: measurement
+        state: >
+          {% set totaal = states('sensor.sensor_totale_pv_energie_vandaag')|float(0.1) %}
+          {% set solaredge = states('sensor.solaredge_energieopbrengst_vandaag')|float(0) %}
+          {% if totaal > 0 %}
+            {{ ((solaredge / totaal) * 100) | round(1) }}
+          {% else %}
+            0
+          {% endif %}
+      - name: "Percentage Opwek Envoy"
+        unit_of_measurement: "%"
+        state_class: measurement
+        state: >
+          {% set totaal = states('sensor.sensor_totale_pv_energie_vandaag')|float(0.1) %}
+          {% set envoy = states('sensor.envoy_122309090641_energy_production_today')|float(0) %}
+          {% if totaal > 0 %}
+            {{ ((envoy / totaal) * 100) | round(1) }}
+          {% else %}
+            0
+          {% endif %}
+      - name: "Percentage Opwek Growatt"
+        unit_of_measurement: "%"
+        state_class: measurement
+        state: >
+          {% set totaal = states('sensor.sensor_totale_pv_energie_vandaag')|float(0.1) %}
+          {% set growatt = states('sensor.amer_growatt_total_energy_today')|float(0) %}
+          {% if totaal > 0 %}
+            {{ ((growatt / totaal) * 100) | round(1) }}
+          {% else %}
+            0
+          {% endif %}
+      - name: "Beste Laadtijd Batterij"
+        icon: mdi:battery-charging
+        state: >
+          {% set prices = state_attr('sensor.zonneplan_current_electricity_tariff', 'prices_today') %}
+          {% set hours = state_attr('sensor.zonneplan_current_electricity_tariff', 'hours_priced_today') %}
+          {% set current_hour = now().hour %}
+          {% if prices and hours and prices|length > current_hour %}
+            {% set remaining_prices = prices[current_hour:] %}
+            {% set remaining_hours = hours[current_hour:] %}
+            {% if remaining_prices|length >= 3 %}
+              {% set min_avg = 999 %}
+              {% set best_start = 0 %}
+              {% for i in range(remaining_prices|length - 2) %}
+                {% set window_prices = [remaining_prices[i], remaining_prices[i+1], remaining_prices[i+2]] %}
+                {% set avg_price = (window_prices | sum) / 3 %}
+                {% if avg_price < min_avg %}
+                  {% set min_avg = avg_price %}
+                  {% set best_start = i %}
+                {% endif %}
+              {% endfor %}
+              {% if remaining_hours[best_start] %}
+                {% set start_hour = remaining_hours[best_start][11:13] | int %}
+                {% set end_hour = start_hour + 3 %}
+                {{ start_hour }}:00 - {{ end_hour }}:00 (gem. €{{ min_avg | round(3) }}/kWh)
+              {% else %}
+                Onbekend
+              {% endif %}
+            {% else %}
+              Niet genoeg resterende uren vandaag
+            {% endif %}
+          {% else %}
+            Geen data beschikbaar
+          {% endif %}
+
+  - sensor:
+      - name: "Verbruik Per Dagdeel"
+        unit_of_measurement: "kWh" 
+        state: >
+          {% set total = states('sensor.connect_energiemeter_electricity_consumption_daily')|float(0) %}
+          {{ total|round(2) }}
+        attributes:
+          template: >
+            {% set consumption_entity = 'sensor.connect_energiemeter_electricity_consumption' %}
+            {% set current_hour = now().hour %}
+            {% set dagdelen = {
+              'Ochtend (6-12)': {'start': 6, 'end': 12, 'sum': 0},
+              'Middag (12-18)': {'start': 12, 'end': 18, 'sum': 0},
+              'Avond (18-24)': {'start': 18, 'end': 24, 'sum': 0},
+              'Nacht (0-6)': {'start': 0, 'end': 6, 'sum': 0}
+            } %}
+            {% set stats = state_attr(consumption_entity, 'hourly_stats') %}
+            {% if stats %}
+              {% for hour, value in stats.items() %}
+                {% set hour_int = hour|int %}
+                {% for name, dagdeel in dagdelen.items() %}
+                  {% if dagdeel.start <= hour_int < dagdeel.end %}
+                    {% set _dummy = dagdelen[name].update({'sum': dagdeel.sum + value|float(0)}) %}
+                  {% endif %}
+                {% endfor %}
+              {% endfor %}
+              {% set chart_data = [] %}
+              {% for name, dagdeel in dagdelen.items() %}
+                {% set _dummy = chart_data.append({
+                  'name': name,
+                  'value': dagdeel.sum|round(2)
+                }) %}
+              {% endfor %}
+              {{ chart_data }}
+            {% else %}
+              []
+            {% endif %}
+      - name: "Stroomprijs Histogram"
+        icon: mdi:chart-histogram
+        state: >
+          {% set prices = state_attr('sensor.zonneplan_current_electricity_tariff', 'prices_today') %}
+          {{ (prices | length) if prices else 0 }}
+        attributes:
+          template: >
+            {% set prices = state_attr('sensor.zonneplan_current_electricity_tariff', 'prices_today') %}
+            {% if prices %}
+              {% set buckets = {
+                'Zeer Laag': {'min': 0, 'max': 0.15, 'count': 0},
+                'Laag': {'min': 0.15, 'max': 0.20, 'count': 0},
+                'Gemiddeld': {'min': 0.20, 'max': 0.25, 'count': 0},
+                'Hoog': {'min': 0.25, 'max': 0.30, 'count': 0},
+                'Zeer Hoog': {'min': 0.30, 'max': 999, 'count': 0}
+              } %}
+              {% for price in prices %}
+                {% for name, bucket in buckets.items() %}
+                  {% if bucket.min <= price < bucket.max %}
+                    {% set _dummy = buckets[name].update({'count': bucket.count + 1}) %}
+                  {% endif %}
+                {% endfor %}
+              {% endfor %}
+              {% set chart_data = [] %}
+              {% for name, bucket in buckets.items() %}
+                {% set percentage = (bucket.count / prices|length * 100)|round %}
+                {% set _dummy = chart_data.append({
+                  'name': name, 
+                  'count': bucket.count,
+                  'percentage': percentage
+                }) %}
+              {% endfor %}
+              {{ chart_data }}
+            {% else %}
+              []
+            {% endif %}
+      - name: "Stroomprijs Min Morgen"
+        unit_of_measurement: "EUR/kWh"
+        state_class: total
+        device_class: monetary
+        icon: mdi:arrow-down-bold
+        state: >
+          {% set prices = state_attr('sensor.zonneplan_current_electricity_tariff', 'prices_tomorrow') %}
+          {% if prices and prices|length > 0 %}
+            {{ (prices | min) | round(3) }}
+          {% else %}
+            0
+          {% endif %}
+      - name: "Stroomprijs Max Morgen"
+        unit_of_measurement: "EUR/kWh"
+        state_class: total
+        device_class: monetary
+        icon: mdi:arrow-up-bold
+        state: >
+          {% set prices = state_attr('sensor.zonneplan_current_electricity_tariff', 'prices_tomorrow') %}
+          {% if prices and prices|length > 0 %}
+            {{ (prices | max) | round(3) }}
+          {% else %}
+            0
+          {% endif %}
+      - name: "Stroomprijs Gemiddeld Morgen"
+        unit_of_measurement: "EUR/kWh"
+        state_class: total
+        device_class: monetary
+        icon: mdi:chart-line
+        state: >
+          {% set prices = state_attr('sensor.zonneplan_current_electricity_tariff', 'prices_tomorrow') %}
+          {% if prices and prices|length > 0 %}
+            {{ (prices | sum / prices | length) | round(3) }}
+          {% else %}
+            0
+          {% endif %}
+      - name: "Prijsvoorspelling"
+        icon: mdi:chart-line
+        state: >
+          {% set prices_tomorrow = state_attr('sensor.zonneplan_current_electricity_tariff', 'prices_tomorrow') %}
+          {% if prices_tomorrow and prices_tomorrow|length > 0 %}
+            {% set avg_tomorrow = prices_tomorrow|sum / prices_tomorrow|length %}
+            {% set avg_today = state_attr('sensor.zonneplan_current_electricity_tariff', 'prices_today')|sum / 
+            state_attr('sensor.zonneplan_current_electricity_tariff', 'prices_today')|length %}
+            {% if avg_tomorrow < avg_today * 0.9 %}
+              Duidelijk lager
+            {% elif avg_tomorrow < avg_today %}
+              Iets lager
+            {% elif avg_tomorrow < avg_today * 1.1 %}
+              Ongeveer gelijk
+            {% elif avg_tomorrow < avg_today * 1.25 %}
+              Iets hoger
+            {% else %}
+              Duidelijk hoger
+            {% endif %}
+          {% else %}
+            Onbekend
+          {% endif %}
+        attributes:
+          template: >
+            {% set prices_today = state_attr('sensor.zonneplan_current_electricity_tariff', 'prices_today') %}
+            {% set prices_tomorrow = state_attr('sensor.zonneplan_current_electricity_tariff', 'prices_tomorrow') %}
+            {% if prices_today and prices_tomorrow %}
+              {% set avg_today = prices_today|sum / prices_today|length %}
+              {% set avg_tomorrow = prices_tomorrow|sum / prices_tomorrow|length %}
+              {% set change_pct = ((avg_tomorrow - avg_today) / avg_today * 100)|round %}
+              {
+                "avg_today": {{ avg_today|round(3) }},
+                "avg_tomorrow": {{ avg_tomorrow|round(3) }},
+                "change_percentage": {{ change_pct }},
+                "min_today": {{ prices_today|min|round(3) }},
+                "max_today": {{ prices_today|max|round(3) }},
+                "min_tomorrow": {{ prices_tomorrow|min|round(3) }},
+                "max_tomorrow": {{ prices_tomorrow|max|round(3) }}
+              }
+            {% else %}
+              {}
+            {% endif %}
+      - name: "Goedkoopste Uur Vandaag"
+        icon: mdi:clock-time-eight-outline
+        state: >
+          {% set prices_today = [] %}
+          {% set current_price = states('sensor.zonneplan_current_electricity_tariff')|float(0) %}
+          {% set current_hour = now().hour %}
+          {# Verzamel alle prijzen voor vandaag inclusief forecasts #}
+          {% for h in range(current_hour + 1, 24) %}
+            {% if h - current_hour - 1 < 8 %}  # We hebben 8 forecast uren
+              {% set sensor_name = 'sensor.zonneplan_forecast_tariff_hour_' ~ (h - current_hour) %}
+              {% if states(sensor_name) != 'unknown' and states(sensor_name)|float > 0 %}
+                {% set prices_today = prices_today + [(h, states(sensor_name)|float)] %}
+              {% endif %}
+            {% endif %}
+          {% endfor %}
+          {% if prices_today|length > 0 %}
+            {% set cheapest = prices_today|sort(attribute='1')|first %}
+            {% set hour = cheapest[0] %}
+            {% set price = cheapest[1]|round(4) %}
+            {{ "%02d:00 - %02d:00 (€%.4f)" | format(hour, hour+1, price) }}
+          {% else %}
+            Geen data beschikbaar
+          {% endif %}
+      - name: "Goedkoopste 3 Uren Vandaag"
+        icon: mdi:clock-time-three-outline
+        state: >
+          {% set prices_today = [] %}
+          {% set current_price = states('sensor.zonneplan_current_electricity_tariff')|float(0) %}
+          {% set current_hour = now().hour %}
+          {# Verzamel alle prijzen voor vandaag inclusief forecasts #}
+          {% for h in range(current_hour + 1, 24) %}
+            {% if h - current_hour - 1 < 8 %}  # We hebben 8 forecast uren
+              {% set sensor_name = 'sensor.zonneplan_forecast_tariff_hour_' ~ (h - current_hour) %}
+              {% if states(sensor_name) != 'unknown' and states(sensor_name)|float > 0 %}
+                {% set prices_today = prices_today + [(h, states(sensor_name)|float)] %}
+              {% endif %}
+            {% endif %}
+          {% endfor %}
+          {% if prices_today|length >= 3 %}
+            {% set cheapest = prices_today|sort(attribute='1')[:3] %}
+            {% set result = [] %}
+            {% for item in cheapest %}
+              {% set hour = item[0] %}
+              {% set price = item[1]|round(4) %}
+              {% set hour_str = "%02d:00 (€%.4f)" | format(hour, price) %}
+              {% set result = result + [hour_str] %}
+            {% endfor %}
+            {{ result|join(', ') }}
+          {% else %}
+            Geen data beschikbaar
+          {% endif %}
+      - name: "Goedkoopste Uur Morgen"
+        icon: mdi:calendar-clock
+        state: >
+          Geen data beschikbaar
+      - name: "Goedkoopste 3 Uren Morgen"
+        icon: mdi:calendar-clock
+        state: >
+          Geen data beschikbaar
+      - name: "Beste Tijd voor Batterij Laden"
+        icon: mdi:battery-charging
+        state: >
+          {% set prices_today = [] %}
+          {% set current_price = states('sensor.zonneplan_current_electricity_tariff')|float(0) %}
+          {% set current_hour = now().hour %}
+          {# Verzamel alle prijzen voor vandaag inclusief forecasts #}
+          {% for h in range(current_hour + 1, 24) %}
+            {% if h - current_hour - 1 < 8 %}  # We hebben 8 forecast uren
+              {% set sensor_name = 'sensor.zonneplan_forecast_tariff_hour_' ~ (h - current_hour) %}
+              {% if states(sensor_name) != 'unknown' and states(sensor_name)|float > 0 %}
+                {% set prices_today = prices_today + [(h, states(sensor_name)|float)] %}
+              {% endif %}
+            {% endif %}
+          {% endfor %}
+          {% if prices_today|length > 0 %}
+            {% set low_threshold = states('sensor.low_price_threshold')|float(0.15) %}
+            {% set cheapest = prices_today|sort(attribute='1')|first %}
+            {% set hour = cheapest[0] %}
+            {% set price = cheapest[1]|round(4) %}
+            {% if price < low_threshold %}
+              {{ "Vandaag %02d:00 - %02d:00 (€%.4f)" | format(hour, hour+1, price) }}
+            {% else %}
+              Wacht op lagere prijzen
+            {% endif %}
+          {% else %}
+            Geen data beschikbaar
+          {% endif %}
+
+  - sensor:
+      - name: "P1 Meter Gas Monthly Usage"
+        unit_of_measurement: "m³"
+        state_class: total
+        device_class: gas
+        icon: mdi:fire
+        state: >
+          {% if states('sensor.monthly_gas_usage') != 'unknown' and states('sensor.monthly_gas_usage') != 'unavailable' %}
+            {{ states('sensor.monthly_gas_usage')|float(0)|round(2) }}
+          {% else %}
+            {% set daily = states('sensor.zonneplan_gas_consumption_today')|float(0) %}
+            {% set days_in_month = now().day %}
+            {{ (daily * days_in_month)|round(2) }}
+          {% endif %}
+      - name: "Water Monthly Usage"
+        unit_of_measurement: "m³"
+        state_class: total
+        device_class: water
+        icon: mdi:water
+        state: >
+          {% if states('sensor.water_maandelijks') != 'unknown' and states('sensor.water_maandelijks') != 'unavailable' %}
+            {{ states('sensor.water_maandelijks')|float(0)|round(2) }}
+          {% else %}
+            {% set daily = states('sensor.water_verbruik_vandaag')|float(0) %}
+            {% set days_in_month = now().day %}
+            {{ (daily * days_in_month)|round(2) if days_in_month > 0 else 0 }}
+          {% endif %}
+      - name: "Buiten Temperatuur"
+        unit_of_measurement: "°C"
+        state_class: measurement
+        device_class: temperature
+        icon: mdi:thermometer
+        state: >
+          {% if states('weather.home') != 'unknown' and states('weather.home') != 'unavailable' and state_attr('weather.home', 'temperature') is not none %}
+            {{ state_attr('weather.home', 'temperature')|float(0)|round(1) }}
+          {% else %}
+            15
+          {% endif %}
+      - name: "Monthly Electricity Cost"
+        unit_of_measurement: "EUR"
+        state_class: total
+        device_class: monetary
+        icon: mdi:cash
+        state: >
+          {% set tarief = states('input_number.energieprijs_elektriciteit')|float(0.30) %}
+          {% set verbruik = states('sensor.energy_import')|float(0) %}
+          {{ (verbruik * tarief)|round(2) }}
+      - name: "Monthly Gas Cost"
+        unit_of_measurement: "EUR"
+        state_class: total
+        device_class: monetary
+        icon: mdi:cash
+        state: >
+          {% set tarief = states('sensor.zonneplan_current_gas_tariff')|float(0.85) if states('sensor.zonneplan_current_gas_tariff') != 'unknown' and states('sensor.zonneplan_current_gas_tariff') != 'unavailable' else 0.85 %}
+          {% set verbruik = states('sensor.p1_meter_gas_monthly_usage')|float(0) %}
+          {{ (verbruik * tarief)|round(2) }}
+      - name: "Monthly Water Cost"
+        unit_of_measurement: "EUR"
+        state_class: total
+        device_class: monetary
+        icon: mdi:cash
+        state: >
+          {% set tarief = states('input_number.water_kosten_per_kuub')|float(1.35) %}
+          {% set verbruik = states('sensor.water_monthly_usage')|float(0) %}
+          {{ (verbruik * tarief)|round(2) }}
+
+  - sensor:
+      - name: "Dagelijkse Stroomprijsdetails"
+        state: "{{ states('sensor.zonneplan_current_electricity_tariff')|float(0) }}"
+        icon: mdi:currency-eur
+        unit_of_measurement: "€/kWh"
+        attributes:
+          hours_priced_today: >
+            {% set current_hour = now().hour %}
+            {% set today = now().strftime('%Y-%m-%d') %}
+            {% set hours = [] %}
+            {% for h in range(24) %}
+              {% set hour_str = '%02d:00:00' | format(h) %}
+              {% set timestamp = today ~ ' ' ~ hour_str %}
+              {% set hours = hours + [timestamp] %}
+            {% endfor %}
+            {{ hours }}
+          prices_today: >
+            {% set forecast_hour_sensors = [
+              'sensor.zonneplan_forecast_tariff_hour_1',
+              'sensor.zonneplan_forecast_tariff_hour_2',
+              'sensor.zonneplan_forecast_tariff_hour_3',
+              'sensor.zonneplan_forecast_tariff_hour_4',
+              'sensor.zonneplan_forecast_tariff_hour_5',
+              'sensor.zonneplan_forecast_tariff_hour_6',
+              'sensor.zonneplan_forecast_tariff_hour_7',
+              'sensor.zonneplan_forecast_tariff_hour_8'
+            ] %}
+            {% set prices = [] %}
+            {% set current_price = states('sensor.zonneplan_current_electricity_tariff')|float(0) %}
+            {% set current_hour = now().hour %}
+            {# Vul uren voor de huidige tijd in met huidige prijs #}
+            {% for h in range(current_hour) %}
+              {% set prices = prices + [current_price] %}
+            {% endfor %}
+            {# Voeg de huidige prijs toe voor dit uur #}
+            {% set prices = prices + [current_price] %}
+            {# Voeg de voorspelde prijzen toe voor de komende uren #}
+            {% set remaining_hours = 23 - current_hour %}
+            {% set forecast_hours = [current_hour + 1, current_hour + 2, current_hour + 3, current_hour + 4, 
+            current_hour + 5, current_hour + 6, current_hour + 7, current_hour + 8] %}
+            {% for h in range(current_hour + 1, 24) %}
+              {% if h - current_hour - 1 < forecast_hour_sensors|length %}
+                {% set forecast_price = states(forecast_hour_sensors[h - current_hour - 1])|float(current_price) %}
+                {% set prices = prices + [forecast_price] %}
+              {% else %}
+                {# Als we geen voorspelling hebben, gebruiken we de laatste bekende prijs #}
+                {% set prices = prices + [current_price] %}
+              {% endif %}
+            {% endfor %}
+            {{ prices }}
+          prices_tomorrow: >
+            {% set forecast_hour_sensors = [
+              'sensor.zonneplan_forecast_tariff_hour_1',
+              'sensor.zonneplan_forecast_tariff_hour_2',
+              'sensor.zonneplan_forecast_tariff_hour_3',
+              'sensor.zonneplan_forecast_tariff_hour_4',
+              'sensor.zonneplan_forecast_tariff_hour_5',
+              'sensor.zonneplan_forecast_tariff_hour_6',
+              'sensor.zonneplan_forecast_tariff_hour_7',
+              'sensor.zonneplan_forecast_tariff_hour_8'
+            ] %}
+            {% set prices = [] %}
+            {% set current_price = states('sensor.zonneplan_current_electricity_tariff')|float(0) %}
+            {% set current_hour = now().hour %}
+            {# Vul uren voor de huidige tijd in met huidige prijs #}
+            {% for h in range(current_hour) %}
+              {% set prices = prices + [current_price] %}
+            {% endfor %}
+            {# Voeg de huidige prijs toe voor dit uur #}
+            {% set prices = prices + [current_price] %}
+            {# Voeg de voorspelde prijzen toe voor de komende uren #}
+            {% set remaining_hours = 23 - current_hour %}
+            {% set forecast_hours = [current_hour + 1, current_hour + 2, current_hour + 3, current_hour + 4, 
+            current_hour + 5, current_hour + 6, current_hour + 7, current_hour + 8] %}
+            {% for h in range(current_hour + 1, 24) %}
+              {% if h - current_hour - 1 < forecast_hour_sensors|length %}
+                {% set forecast_price = states(forecast_hour_sensors[h - current_hour - 1])|float(current_price) %}
+                {% set prices = prices + [forecast_price] %}
+              {% else %}
+                {# Als we geen voorspelling hebben, gebruiken we de laatste bekende prijs #}
+                {% set prices = prices + [current_price] %}
+              {% endif %}
+            {% endfor %}
+            {{ prices }}
