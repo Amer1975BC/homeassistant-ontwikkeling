@@ -1,118 +1,118 @@
-- sensor:
-    # Beste moment om de batterij op te laden (goedkoopste 3 uur periode)
-    - name: "Beste Laadtijd Batterij"
-      icon: mdi:battery-charging
-      state: >
-        {% set prices = state_attr('sensor.zonneplan_current_electricity_tariff', 'prices_today') %}
-        {% set hours = state_attr('sensor.zonneplan_current_electricity_tariff', 'hours_priced_today') %}
-        {% set current_hour = now().hour %}
-        {% if prices and hours and prices|length > current_hour %}
-          {% set remaining_prices = prices[current_hour:] %}
-          {% set remaining_hours = hours[current_hour:] %}
-          {% if remaining_prices|length >= 3 %}
-            {% set min_avg = 999 %}
-            {% set best_start = 0 %}
-            {% for i in range(remaining_prices|length - 2) %}
-              {% set window_prices = [remaining_prices[i], remaining_prices[i+1], remaining_prices[i+2]] %}
-              {% set avg_price = (window_prices | sum) / 3 %}
-              {% if avg_price < min_avg %}
-                {% set min_avg = avg_price %}
-                {% set best_start = i %}
+template:
+  - sensor:
+      - name: "Beste Laadtijd Batterij"
+        icon: mdi:battery-charging
+        state: >
+          {% set prices = state_attr('sensor.zonneplan_current_electricity_tariff', 'prices_today') %}
+          {% set hours = state_attr('sensor.zonneplan_current_electricity_tariff', 'hours_priced_today') %}
+          {% set current_hour = now().hour %}
+          {% if prices and hours and prices|length > current_hour %}
+            {% set remaining_prices = prices[current_hour:] %}
+            {% set remaining_hours = hours[current_hour:] %}
+            {% if remaining_prices|length >= 3 %}
+              {% set min_avg = 999 %}
+              {% set best_start = 0 %}
+              {% for i in range(remaining_prices|length - 2) %}
+                {% set window_prices = [remaining_prices[i], remaining_prices[i+1], remaining_prices[i+2]] %}
+                {% set avg_price = (window_prices | sum) / 3 %}
+                {% if avg_price < min_avg %}
+                  {% set min_avg = avg_price %}
+                  {% set best_start = i %}
+                {% endif %}
+              {% endfor %}
+              {% if remaining_hours[best_start] %}
+                {% set start_hour = remaining_hours[best_start][11:13] | int %}
+                {% set end_hour = start_hour + 3 %}
+                {{ start_hour }}:00 - {{ end_hour }}:00 (gem. €{{ min_avg | round(3) }}/kWh)
+              {% else %}
+                Onbekend
               {% endif %}
-            {% endfor %}
-            {% if remaining_hours[best_start] %}
-              {% set start_hour = remaining_hours[best_start][11:13] | int %}
-              {% set end_hour = start_hour + 3 %}
-              {{ start_hour }}:00 - {{ end_hour }}:00 (gem. €{{ min_avg | round(3) }}/kWh)
             {% else %}
-              Onbekend
+              Niet genoeg resterende uren vandaag
             {% endif %}
           {% else %}
-            Niet genoeg resterende uren vandaag
+            Geen data beschikbaar
           {% endif %}
-        {% else %}
-          Geen data beschikbaar
-        {% endif %}
 
-    # Verbruik per dagdeel voor radar chart
-    - name: "Verbruik Per Dagdeel"
-      unit_of_measurement: "kWh" 
-      state: >
-        {% set total = states('sensor.connect_energiemeter_electricity_consumption_daily')|float(0) %}
-        {{ total|round(2) }}
-      attributes:
-        template: >
-          {% set consumption_entity = 'sensor.connect_energiemeter_electricity_consumption' %}
-          {% set current_hour = now().hour %}
-          
-          {% set dagdelen = {
-            'Ochtend (6-12)': {'start': 6, 'end': 12, 'sum': 0},
-            'Middag (12-18)': {'start': 12, 'end': 18, 'sum': 0},
-            'Avond (18-24)': {'start': 18, 'end': 24, 'sum': 0},
-            'Nacht (0-6)': {'start': 0, 'end': 6, 'sum': 0}
-          } %}
-          
-          {% set stats = state_attr(consumption_entity, 'hourly_stats') %}
-          {% if stats %}
-            {% for hour, value in stats.items() %}
-              {% set hour_int = hour|int %}
-              {% for name, dagdeel in dagdelen.items() %}
-                {% if dagdeel.start <= hour_int < dagdeel.end %}
-                  {% set _dummy = dagdelen[name].update({'sum': dagdeel.sum + value|float(0)}) %}
-                {% endif %}
-              {% endfor %}
-            {% endfor %}
+  - sensor:
+      - name: "Verbruik Per Dagdeel"
+        unit_of_measurement: "kWh" 
+        state: >
+          {% set total = states('sensor.connect_energiemeter_electricity_consumption_daily')|float(0) %}
+          {{ total|round(2) }}
+        attributes:
+          dagdelen: >
+            {% set consumption_entity = 'sensor.connect_energiemeter_electricity_consumption' %}
+            {% set current_hour = now().hour %}
             
-            {% set chart_data = [] %}
-            {% for name, dagdeel in dagdelen.items() %}
-              {% set _dummy = chart_data.append({
-                'name': name,
-                'value': dagdeel.sum|round(2)
-              }) %}
-            {% endfor %}
-            
-            {{ chart_data }}
-          {% else %}
-            []
-          {% endif %}
-          
-    # Stroomprijs histogram voor tariefverdeling visualisatie
-    - name: "Stroomprijs Histogram"
-      icon: mdi:chart-histogram
-      state: >
-        {% set prices = state_attr('sensor.zonneplan_current_electricity_tariff', 'prices_today') %}
-        {{ (prices | length) if prices else 0 }}
-      attributes:
-        template: >
-          {% set prices = state_attr('sensor.zonneplan_current_electricity_tariff', 'prices_today') %}
-          {% if prices %}
-            {% set buckets = {
-              'Zeer Laag': {'min': 0, 'max': 0.15, 'count': 0},
-              'Laag': {'min': 0.15, 'max': 0.20, 'count': 0},
-              'Gemiddeld': {'min': 0.20, 'max': 0.25, 'count': 0},
-              'Hoog': {'min': 0.25, 'max': 0.30, 'count': 0},
-              'Zeer Hoog': {'min': 0.30, 'max': 999, 'count': 0}
+            {% set dagdelen = {
+              'Ochtend (6-12)': {'start': 6, 'end': 12, 'sum': 0},
+              'Middag (12-18)': {'start': 12, 'end': 18, 'sum': 0},
+              'Avond (18-24)': {'start': 18, 'end': 24, 'sum': 0},
+              'Nacht (0-6)': {'start': 0, 'end': 6, 'sum': 0}
             } %}
             
-            {% for price in prices %}
-              {% for name, bucket in buckets.items() %}
-                {% if bucket.min <= price < bucket.max %}
-                  {% set _dummy = buckets[name].update({'count': bucket.count + 1}) %}
-                {% endif %}
+            {% set stats = state_attr(consumption_entity, 'hourly_stats') %}
+            {% if stats %}
+              {% for hour, value in stats.items() %}
+                {% set hour_int = hour|int %}
+                {% for name, dagdeel in dagdelen.items() %}
+                  {% if dagdeel.start <= hour_int < dagdeel.end %}
+                    {% set _dummy = dagdelen[name].update({'sum': dagdeel.sum + value|float(0)}) %}
+                  {% endif %}
+                {% endfor %}
               {% endfor %}
-            {% endfor %}
-            
-            {% set chart_data = [] %}
-            {% for name, bucket in buckets.items() %}
-              {% set percentage = (bucket.count / prices|length * 100)|round %}
-              {% set _dummy = chart_data.append({
-                'name': name, 
-                'count': bucket.count,
-                'percentage': percentage
-              }) %}
-            {% endfor %}
-            
-            {{ chart_data }}
-          {% else %}
-            []
-          {% endif %}
+              
+              {% set chart_data = [] %}
+              {% for name, dagdeel in dagdelen.items() %}
+                {% set _dummy = chart_data.append({
+                  'name': name,
+                  'value': dagdeel.sum|round(2)
+                }) %}
+              {% endfor %}
+              
+              {{ chart_data }}
+            {% else %}
+              []
+            {% endif %}
+
+  - sensor:
+      - name: "Stroomprijs Histogram"
+        icon: mdi:chart-histogram
+        state: >
+          {% set prices = state_attr('sensor.zonneplan_current_electricity_tariff', 'prices_today') %}
+          {{ (prices | length) if prices else 0 }}
+        attributes:
+          histogramdata: >
+            {% set prices = state_attr('sensor.zonneplan_current_electricity_tariff', 'prices_today') %}
+            {% if prices %}
+              {% set buckets = {
+                'Zeer Laag': {'min': 0, 'max': 0.15, 'count': 0},
+                'Laag': {'min': 0.15, 'max': 0.20, 'count': 0},
+                'Gemiddeld': {'min': 0.20, 'max': 0.25, 'count': 0},
+                'Hoog': {'min': 0.25, 'max': 0.30, 'count': 0},
+                'Zeer Hoog': {'min': 0.30, 'max': 999, 'count': 0}
+              } %}
+              
+              {% for price in prices %}
+                {% for name, bucket in buckets.items() %}
+                  {% if bucket.min <= price < bucket.max %}
+                    {% set _dummy = buckets[name].update({'count': bucket.count + 1}) %}
+                  {% endif %}
+                {% endfor %}
+              {% endfor %}
+              
+              {% set chart_data = [] %}
+              {% for name, bucket in buckets.items() %}
+                {% set percentage = (bucket.count / prices|length * 100)|round %}
+                {% set _dummy = chart_data.append({
+                  'name': name, 
+                  'count': bucket.count,
+                  'percentage': percentage
+                }) %}
+              {% endfor %}
+              
+              {{ chart_data }}
+            {% else %}
+              []
+            {% endif %}

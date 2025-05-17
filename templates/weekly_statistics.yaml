@@ -1,65 +1,66 @@
-- sensor:
-    # Wekelijkse elektriciteit statistieken
-    - name: "Weekly Electricity Consumption"
-      unit_of_measurement: "kWh"
-      state_class: total
-      device_class: energy
-      icon: mdi:flash
-      state: >
-        {% set now_day = now().weekday() %}
-        {% set today = states('sensor.zonneplan_electricity_consumption_today') | float(0) %}
-        {% set yesterday = states('sensor.zonneplan_electricity_consumption_yesterday') | float(0) %}
-        {% set this_week = today %}
-        {% if now_day >= 1 %}
-          {% set this_week = this_week + yesterday %}
-        {% endif %}
-        {% if state_attr('sensor.zonneplan_electricity_consumption_today', 'weekly_data') %}
-          {% set weekly_data = state_attr('sensor.zonneplan_electricity_consumption_today', 'weekly_data') %}
-          {% set this_week = weekly_data | sum %}
-        {% endif %}
-        {{ this_week | round(2) }}
-
-    - name: "Weekly Forecast Consumption"
-      unit_of_measurement: "kWh"
-      state_class: total
-      device_class: energy
-      icon: mdi:chart-line
-      state: >
-        {% set avg_daily = states('sensor.zonneplan_electricity_consumption_today') | float(0) %}
-        {% set days_left = 7 - now().weekday() %}
-        {% set current_week = states('sensor.weekly_electricity_consumption') | float(0) %}
-        {% set forecast = current_week + (avg_daily * days_left) %}
-        {{ forecast | round(2) }}
-
-    - name: "Weekly Solar Production"
-      unit_of_measurement: "kWh"
-      state_class: total
-      device_class: energy
-      icon: mdi:solar-power
-      state: >
-        {% set now_day = now().weekday() %}
-        {% set today = states('sensor.sensor_totale_pv_energie_vandaag') | float(0) %}
-        {% set yesterday = states('sensor.sensor_totale_pv_energie_gisteren') | float(0) %}
-        {% set this_week = today %}
-        {% if now_day >= 1 %}
-          {% set this_week = this_week + yesterday %}
-        {% endif %}
-        {% if state_attr('sensor.sensor_totale_pv_energie_vandaag', 'weekly_data') %}
-          {% set weekly_data = state_attr('sensor.sensor_totale_pv_energie_vandaag', 'weekly_data') %}
-          {% set this_week = weekly_data | sum %}
-        {% endif %}
-        {{ this_week | round(2) }}
-
-    - name: "Weekly Sunshine Hours"
-      unit_of_measurement: "h"
-      state_class: total
-      icon: mdi:weather-sunny
-      state: >
-        {% set now_day = now().weekday() %}
-        {% set today_hours = states('sensor.sunshine_hours_today') | float(0) %}
-        {% set this_week = today_hours %}
-        {% if state_attr('sensor.sunshine_hours_today', 'weekly_data') %}
-          {% set weekly_data = state_attr('sensor.sunshine_hours_today', 'weekly_data') %}
-          {% set this_week = weekly_data | sum %}
-        {% endif %}
-        {{ this_week | round(1) }}
+template:
+  - sensor:
+      # Wekelijkse elektriciteit statistieken
+      - name: "Weekly Electricity Consumption"
+        unit_of_measurement: "kWh"
+        state_class: total
+        device_class: energy
+        icon: mdi:flash
+        state: >
+          {% set now_day = now().weekday() %}
+          {% set today = states('sensor.zonneplan_electricity_consumption_today') | float(0) %}
+          {% set yesterday = states('sensor.zonneplan_electricity_consumption_yesterday') | float(0) %}
+          {% set this_week = today %}
+          {% if now_day >= 1 %}
+            {% set this_week = this_week + yesterday %}
+          {% endif %}
+          {% if state_attr('sensor.zonneplan_electricity_consumption_today', 'weekly_data') %}
+            {% set weekly_data = state_attr('sensor.zonneplan_electricity_consumption_today', 'weekly_data') %}
+            {% set this_week = weekly_data | sum %}
+          {% endif %}
+          {{ this_week | round(2) }}
+          
+      - name: "Weekly Forecast Consumption"
+        unit_of_measurement: "kWh"
+        state_class: total
+        device_class: energy
+        icon: mdi:chart-line
+        state: >
+          {% set avg_daily = states('sensor.zonneplan_electricity_consumption_today') | float(0) %}
+          {% set days_left = 7 - now().weekday() %}
+          {% set current_week = states('sensor.weekly_electricity_consumption') | float(0) %}
+          {% set forecast = current_week + (avg_daily * days_left) %}
+          {{ forecast | round(2) }}
+          
+      - name: "Weekly Solar Production"
+        unit_of_measurement: "kWh"
+        state_class: total
+        device_class: energy
+        icon: mdi:solar-power
+        state: >
+          {% set now_day = now().weekday() %}
+          {% set today = states('sensor.sensor_totale_pv_energie_vandaag') | float(0) %}
+          {% set yesterday = states('sensor.sensor_totale_pv_energie_gisteren') | float(0) %}
+          {% set this_week = today %}
+          {% if now_day >= 1 %}
+            {% set this_week = this_week + yesterday %}
+          {% endif %}
+          {% if state_attr('sensor.sensor_totale_pv_energie_vandaag', 'weekly_data') %}
+            {% set weekly_data = state_attr('sensor.sensor_totale_pv_energie_vandaag', 'weekly_data') %}
+            {% set this_week = weekly_data | sum %}
+          {% endif %}
+          {{ this_week | round(2) }}
+          
+      - name: "Weekly Sunshine Hours"
+        unit_of_measurement: "h"
+        state_class: total
+        icon: mdi:weather-sunny
+        state: >
+          {% set now_day = now().weekday() %}
+          {% set today_hours = states('sensor.sunshine_hours_today') | float(0) %}
+          {% set this_week = today_hours %}
+          {% if state_attr('sensor.sunshine_hours_today', 'weekly_data') %}
+            {% set weekly_data = state_attr('sensor.sunshine_hours_today', 'weekly_data') %}
+            {% set this_week = weekly_data | sum %}
+          {% endif %}
+          {{ this_week | round(1) }}

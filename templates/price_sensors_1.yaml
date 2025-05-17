@@ -1,112 +1,113 @@
-- sensor:
-    # Prijssensoren voor dashboard
-    - name: "Dynamische Energie Prijs"
-      unit_of_measurement: "EUR/kWh"
-      state_class: total
-      device_class: monetary
-      icon: mdi:currency-eur
-      state: >
-        {% if states('sensor.entsoe_average_electricity_price_today') != 'unknown' and states('sensor.entsoe_average_electricity_price_today') != 'unavailable' %}
-          {{ states('sensor.entsoe_average_electricity_price_today')|float(0)|round(4) }}
-        {% else %}
-          0.25
-        {% endif %}
-    
-    - name: "Huidige Gas Prijs"
-      unit_of_measurement: "EUR/m³"
-      state_class: total
-      device_class: monetary
-      icon: mdi:currency-eur
-      state: >
-        {% if states('sensor.zonneplan_current_gas_tariff') != 'unknown' and states('sensor.zonneplan_current_gas_tariff') != 'unavailable' %}
-          {{ states('sensor.zonneplan_current_gas_tariff')|float(0)|round(3) }}
-        {% else %}
-          0.85
-        {% endif %}
-
-    - name: "Stroomprijs Huidig"
-      unit_of_measurement: "EUR/kWh"
-      state_class: total
-      device_class: monetary
-      icon: mdi:flash-circle
-      state: >
-        {% if states('sensor.entsoe_current_hour_price') != 'unknown' and states('sensor.entsoe_current_hour_price') != 'unavailable' %}
-          {{ states('sensor.entsoe_current_hour_price')|float(0)|round(4) }}
-        {% else %}
-          0.30
-        {% endif %}
-    
-    - name: "Stroomprijs Min Vandaag"
-      unit_of_measurement: "EUR/kWh"
-      state_class: total
-      device_class: monetary
-      icon: mdi:flash-circle
-      state: >
-        {% if states('sensor.entsoe_min_price_today') != 'unknown' and states('sensor.entsoe_min_price_today') != 'unavailable' %}
-          {{ states('sensor.entsoe_min_price_today')|float(0)|round(4) }}
-        {% else %}
-          0.20
-        {% endif %}
-    
-    - name: "Stroomprijs Max Vandaag"
-      unit_of_measurement: "EUR/kWh"
-      state_class: total
-      device_class: monetary
-      icon: mdi:flash-circle
-      state: >
-        {% if states('sensor.entsoe_max_price_today') != 'unknown' and states('sensor.entsoe_max_price_today') != 'unavailable' %}
-          {{ states('sensor.entsoe_max_price_today')|float(0)|round(4) }}
-        {% else %}
-          0.40
-        {% endif %}
-    
-    - name: "Stroomprijs Gemiddeld Vandaag"
-      unit_of_measurement: "EUR/kWh"
-      state_class: total
-      device_class: monetary
-      icon: mdi:flash-circle
-      state: >
-        {% if states('sensor.entsoe_average_price_today') != 'unknown' and states('sensor.entsoe_average_price_today') != 'unavailable' %}
-          {{ states('sensor.entsoe_average_price_today')|float(0)|round(4) }}
-        {% else %}
-          0.30
-        {% endif %}
-    
-    - name: "Zonneplan All In Prijs"
-      unit_of_measurement: "EUR/kWh"
-      state_class: total
-      device_class: monetary
-      icon: mdi:cash
-      state: >
-        {% if states('sensor.zonneplan_current_electricity_tariff') != 'unknown' and states('sensor.zonneplan_current_electricity_tariff') != 'unavailable' %}
-          {{ states('sensor.zonneplan_current_electricity_tariff')|float(0)|round(4) }}
-        {% else %}
-          0.30
-        {% endif %}
-
-    # Indicator sensoren
-    - name: "Laag Tarief Indicator"
-      unit_of_measurement: ""
-      state_class: measurement
-      icon: mdi:arrow-down-bold
-      state: >
-        {% set current_price = states('sensor.stroomprijs_huidig')|float(0.30) %}
-        {% set avg_price = states('sensor.stroomprijs_gemiddeld_vandaag')|float(0.30) %}
-        {% if current_price < avg_price * 0.85 %}
-          1
-        {% else %}
-          0
-        {% endif %}
-    
-    - name: "Hoog Tarief Indicator"
-      unit_of_measurement: ""
-      state_class: measurement
-      icon: mdi:arrow-up-bold
-      state: >
-        {% set current_price = states('sensor.stroomprijs_huidig')|float(0.30) %}
-        {% set avg_price = states('sensor.stroomprijs_gemiddeld_vandaag')|float(0.30) %}
-        {% if current_price > avg_price * 1.15 %}
-          1
-        {% else %}
-          0
-        {% endif %}
+template:
+  - sensor:
+      # Prijssensoren voor dashboard
+      - name: "Dynamische Energie Prijs"
+        unit_of_measurement: "EUR/kWh"
+        state_class: total
+        device_class: monetary
+        icon: mdi:currency-eur
+        state: >
+          {% if states('sensor.entsoe_average_electricity_price_today') != 'unknown' and states('sensor.entsoe_average_electricity_price_today') != 'unavailable' %}
+            {{ states('sensor.entsoe_average_electricity_price_today')|float(0)|round(4) }}
+          {% else %}
+            0.25
+          {% endif %}
+      
+      - name: "Huidige Gas Prijs"
+        unit_of_measurement: "EUR/m³"
+        state_class: total
+        device_class: monetary
+        icon: mdi:currency-eur
+        state: >
+          {% if states('sensor.zonneplan_current_gas_tariff') != 'unknown' and states('sensor.zonneplan_current_gas_tariff') != 'unavailable' %}
+            {{ states('sensor.zonneplan_current_gas_tariff')|float(0)|round(3) }}
+          {% else %}
+            0.85
+          {% endif %}
+            
+      - name: "Stroomprijs Huidig"
+        unit_of_measurement: "EUR/kWh"
+        state_class: total
+        device_class: monetary
+        icon: mdi:flash-circle
+        state: >
+          {% if states('sensor.entsoe_current_hour_price') != 'unknown' and states('sensor.entsoe_current_hour_price') != 'unavailable' %}
+            {{ states('sensor.entsoe_current_hour_price')|float(0)|round(4) }}
+          {% else %}
+            0.30
+          {% endif %}
+      
+      - name: "Stroomprijs Min Vandaag"
+        unit_of_measurement: "EUR/kWh"
+        state_class: total
+        device_class: monetary
+        icon: mdi:flash-circle
+        state: >
+          {% if states('sensor.entsoe_min_price_today') != 'unknown' and states('sensor.entsoe_min_price_today') != 'unavailable' %}
+            {{ states('sensor.entsoe_min_price_today')|float(0)|round(4) }}
+          {% else %}
+            0.20
+          {% endif %}
+      
+      - name: "Stroomprijs Max Vandaag"
+        unit_of_measurement: "EUR/kWh"
+        state_class: total
+        device_class: monetary
+        icon: mdi:flash-circle
+        state: >
+          {% if states('sensor.entsoe_max_price_today') != 'unknown' and states('sensor.entsoe_max_price_today') != 'unavailable' %}
+            {{ states('sensor.entsoe_max_price_today')|float(0)|round(4) }}
+          {% else %}
+            0.40
+          {% endif %}
+      
+      - name: "Stroomprijs Gemiddeld Vandaag"
+        unit_of_measurement: "EUR/kWh"
+        state_class: total
+        device_class: monetary
+        icon: mdi:flash-circle
+        state: >
+          {% if states('sensor.entsoe_average_price_today') != 'unknown' and states('sensor.entsoe_average_price_today') != 'unavailable' %}
+            {{ states('sensor.entsoe_average_price_today')|float(0)|round(4) }}
+          {% else %}
+            0.30
+          {% endif %}
+      
+      - name: "Zonneplan All In Prijs"
+        unit_of_measurement: "EUR/kWh"
+        state_class: total
+        device_class: monetary
+        icon: mdi:cash
+        state: >
+          {% if states('sensor.zonneplan_current_electricity_tariff') != 'unknown' and states('sensor.zonneplan_current_electricity_tariff') != 'unavailable' %}
+            {{ states('sensor.zonneplan_current_electricity_tariff')|float(0)|round(4) }}
+          {% else %}
+            0.30
+          {% endif %}
+            
+      # Indicator sensoren
+      - name: "Laag Tarief Indicator"
+        unit_of_measurement: ""
+        state_class: measurement
+        icon: mdi:arrow-down-bold
+        state: >
+          {% set current_price = states('sensor.stroomprijs_huidig')|float(0.30) %}
+          {% set avg_price = states('sensor.stroomprijs_gemiddeld_vandaag')|float(0.30) %}
+          {% if current_price < avg_price * 0.85 %}
+            1
+          {% else %}
+            0
+          {% endif %}
+      
+      - name: "Hoog Tarief Indicator"
+        unit_of_measurement: ""
+        state_class: measurement
+        icon: mdi:arrow-up-bold
+        state: >
+          {% set current_price = states('sensor.stroomprijs_huidig')|float(0.30) %}
+          {% set avg_price = states('sensor.stroomprijs_gemiddeld_vandaag')|float(0.30) %}
+          {% if current_price > avg_price * 1.15 %}
+            1
+          {% else %}
+            0
+          {% endif %}

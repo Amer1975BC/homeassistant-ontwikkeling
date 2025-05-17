@@ -1,137 +1,138 @@
-- sensor:
-    # Energie-gerelateerde sensoren
-    - name: "Solar Vermogen Totaal"
-      unit_of_measurement: "W"
-      device_class: power
-      state_class: measurement
-      state: >
-        {% set growatt = states('sensor.amer_growatt_total_output_power') | float(0) %}
-        {% set envoy = states('sensor.envoy_vermogen_in_watt') | float(0) %}
-        {% set solaredge_w = states('sensor.solaredge_huidig_vermogen') | float(0) %}
-        {% set solaredge_kw = states('sensor.solaredge_zonne_energie') | float(0) * 1000 %}
-        {{ (growatt + envoy + solaredge_w + solaredge_kw) | round(0) }}
+template:
+  - sensor:
+      # Energie-gerelateerde sensoren
+      - name: "Solar Vermogen Totaal"
+        unit_of_measurement: "W"
+        device_class: power
+        state_class: measurement
+        state: >
+          {% set growatt = states('sensor.amer_growatt_total_output_power') | float(0) %}
+          {% set envoy = states('sensor.envoy_vermogen_in_watt') | float(0) %}
+          {% set solaredge_w = states('sensor.solaredge_huidig_vermogen') | float(0) %}
+          {% set solaredge_kw = states('sensor.solaredge_zonne_energie') | float(0) * 1000 %}
+          {{ (growatt + envoy + solaredge_w + solaredge_kw) | round(0) }}
 
-    - name: "Huisverbruik van Zon"
-      unit_of_measurement: "W"
-      device_class: power
-      state_class: measurement
-      state: >
-        {{ [
-          states('sensor.solar_vermogen_totaal') | float(0),
-          states('sensor.connect_energiemeter_electricity_consumption') | float(0)
-        ] | min }}
+      - name: "Huisverbruik van Zon"
+        unit_of_measurement: "W"
+        device_class: power
+        state_class: measurement
+        state: >
+          {{ [
+            states('sensor.solar_vermogen_totaal') | float(0),
+            states('sensor.connect_energiemeter_electricity_consumption') | float(0)
+          ] | min }}
 
-    - name: "Huisverbruik van Net"
-      unit_of_measurement: "W"
-      device_class: power
-      state_class: measurement
-      state: >
-        {% set verbruik = states('sensor.connect_energiemeter_electricity_consumption') | float(0) %}
-        {% set uit_zon = [
-          states('sensor.solar_vermogen_totaal') | float(0),
-          verbruik
-        ] | min %}
-        {% set via_net = verbruik - uit_zon %}
-        {{ [via_net, 0] | max }}
+      - name: "Huisverbruik van Net"
+        unit_of_measurement: "W"
+        device_class: power
+        state_class: measurement
+        state: >
+          {% set verbruik = states('sensor.connect_energiemeter_electricity_consumption') | float(0) %}
+          {% set uit_zon = [
+            states('sensor.solar_vermogen_totaal') | float(0),
+            verbruik
+          ] | min %}
+          {% set via_net = verbruik - uit_zon %}
+          {{ [via_net, 0] | max }}
 
-    - name: "Huisverbruik van Batterij"
-      unit_of_measurement: "W"
-      device_class: power
-      state_class: measurement
-      state: >
-        {% set verbruik = states('sensor.connect_energiemeter_electricity_consumption') | float(0) %}
-        {% set net = states('sensor.connect_energiemeter_electricity_production') | float(0) %}
-        {% set diff = verbruik - net %}
-        {{ [diff, 0] | max }}
+      - name: "Huisverbruik van Batterij"
+        unit_of_measurement: "W"
+        device_class: power
+        state_class: measurement
+        state: >
+          {% set verbruik = states('sensor.connect_energiemeter_electricity_consumption') | float(0) %}
+          {% set net = states('sensor.connect_energiemeter_electricity_production') | float(0) %}
+          {% set diff = verbruik - net %}
+          {{ [diff, 0] | max }}
 
-    - name: "Teruglevering naar Net"
-      unit_of_measurement: "W"
-      device_class: power
-      state_class: measurement
-      state: >
-        {% set net_export = states('sensor.connect_energiemeter_electricity_production') | float(0) %}
-        {{ [net_export, 0] | max }}
+      - name: "Teruglevering naar Net"
+        unit_of_measurement: "W"
+        device_class: power
+        state_class: measurement
+        state: >
+          {% set net_export = states('sensor.connect_energiemeter_electricity_production') | float(0) %}
+          {{ [net_export, 0] | max }}
 
-    - name: "Zelfvoorzieningspercentage"
-      unit_of_measurement: "%"
-      device_class: battery
-      state_class: measurement
-      state: >
-        {% set verbruik = states('sensor.connect_energiemeter_electricity_consumption') | float(0) %}
-        {% set uit_zon = [
-          states('sensor.solar_vermogen_totaal') | float(0),
-          verbruik
-        ] | min %}
-        {% if verbruik > 0 %}
-          {{ (uit_zon / verbruik * 100) | round(1) }}
-        {% else %}
-          0
-        {% endif %}
+      - name: "Zelfvoorzieningspercentage"
+        unit_of_measurement: "%"
+        device_class: battery
+        state_class: measurement
+        state: >
+          {% set verbruik = states('sensor.connect_energiemeter_electricity_consumption') | float(0) %}
+          {% set uit_zon = [
+            states('sensor.solar_vermogen_totaal') | float(0),
+            verbruik
+          ] | min %}
+          {% if verbruik > 0 %}
+            {{ (uit_zon / verbruik * 100) | round(1) }}
+          {% else %}
+            0
+          {% endif %}
 
-    - name: "Energie Balans Controle"
-      unit_of_measurement: "W"
-      device_class: power
-      state_class: measurement
-      state: >
-        {% set solar = states('sensor.solar_vermogen_totaal') | float(0) %}
-        {% set net = states('sensor.connect_energiemeter_electricity_production') | float(0) %}
-        {% set verbruik = states('sensor.connect_energiemeter_electricity_consumption') | float(0) %}
-        {{ (solar + net - verbruik) | round(0) }}
-        
-    # Sensors - Kostenberekeningen
-    - name: "Kosten Stroom Vandaag"
-      unit_of_measurement: "EUR"
-      state_class: total
-      device_class: monetary
-      state: >
-        {% set consumptie = states('sensor.zonneplan_electricity_consumption_today')|float(0) %}
-        {% set prijs = states('input_number.energieprijs_elektriciteit')|float(0.22) %}
-        {{ (consumptie * prijs) | round(2) }}
+      - name: "Energie Balans Controle"
+        unit_of_measurement: "W"
+        device_class: power
+        state_class: measurement
+        state: >
+          {% set solar = states('sensor.solar_vermogen_totaal') | float(0) %}
+          {% set net = states('sensor.connect_energiemeter_electricity_production') | float(0) %}
+          {% set verbruik = states('sensor.connect_energiemeter_electricity_consumption') | float(0) %}
+          {{ (solar + net - verbruik) | round(0) }}
+          
+      # Sensors - Kostenberekeningen
+      - name: "Kosten Stroom Vandaag"
+        unit_of_measurement: "EUR"
+        state_class: total
+        device_class: monetary
+        state: >
+          {% set consumptie = states('sensor.zonneplan_electricity_consumption_today')|float(0) %}
+          {% set prijs = states('input_number.energieprijs_elektriciteit')|float(0.22) %}
+          {{ (consumptie * prijs) | round(2) }}
 
-    - name: "Besparing Zonnepanelen Vandaag"
-      unit_of_measurement: "EUR"
-      state_class: total
-      device_class: monetary
-      state: >
-        {% set zelf_verbruikt = states('sensor.dagelijks_zon_verbruik')|float(0) %}
-        {% set prijs_inkoop = states('input_number.energieprijs_elektriciteit')|float(0.22) %}
-        {% set teruglevering = states('sensor.zonneplan_electricity_returned_today')|float(0) %}
-        {% set prijs_teruglevering = states('input_number.terugleververgoeding')|float(0.07) %}
-        {{ ((zelf_verbruikt * prijs_inkoop) + (teruglevering * prijs_teruglevering)) | round(2) }}
+      - name: "Besparing Zonnepanelen Vandaag"
+        unit_of_measurement: "EUR"
+        state_class: total
+        device_class: monetary
+        state: >
+          {% set zelf_verbruikt = states('sensor.dagelijks_zon_verbruik')|float(0) %}
+          {% set prijs_inkoop = states('input_number.energieprijs_elektriciteit')|float(0.22) %}
+          {% set teruglevering = states('sensor.zonneplan_electricity_returned_today')|float(0) %}
+          {% set prijs_teruglevering = states('input_number.terugleververgoeding')|float(0.07) %}
+          {{ ((zelf_verbruikt * prijs_inkoop) + (teruglevering * prijs_teruglevering)) | round(2) }}
 
-    - name: "Dagelijks Zon Verbruik Correct"
-      unit_of_measurement: "kWh"
-      state_class: total
-      device_class: energy
-      state: >
-        {% set production = states('sensor.sensor_totale_pv_energie_vandaag')|float(0) %}
-        {% set export = states('sensor.zonneplan_electricity_returned_today')|float(0) %}
-        {% set battery_charge = states('sensor.thuisbatterij_today')|float(0) %}
-        {{ [production - export - battery_charge, 0] | max | round(2) }}
+      - name: "Dagelijks Zon Verbruik Correct"
+        unit_of_measurement: "kWh"
+        state_class: total
+        device_class: energy
+        state: >
+          {% set production = states('sensor.sensor_totale_pv_energie_vandaag')|float(0) %}
+          {% set export = states('sensor.zonneplan_electricity_returned_today')|float(0) %}
+          {% set battery_charge = states('sensor.thuisbatterij_today')|float(0) %}
+          {{ [production - export - battery_charge, 0] | max | round(2) }}
 
-    # Sensors - Energie Stroomrichting
-    - name: "Energie Stroomrichting"
-      icon: mdi:transmission-tower-export
-      state: >
-        {% set pv_power = states('sensor.solar_vermogen_totaal')|float(0) %}
-        {% set grid_import = states('sensor.huisverbruik_van_net')|float(0) %}
-        {% set grid_export = states('sensor.teruglevering_naar_net')|float(0) %}
-        {% set battery_charge = states('sensor.batterij_laadvermogen')|float(0) %}
-        {% set battery_discharge = states('sensor.batterij_ontlading_vermogen')|float(0) %}
-        {% set consumption = states('sensor.connect_energiemeter_electricity_consumption')|float(0) %}
-        
-        {% if grid_export > 50 and battery_charge > 50 %}
-          Terugleveren & Batterij Laden
-        {% elif grid_export > 50 %}
-          Terugleveren
-        {% elif battery_charge > 50 %}
-          Batterij Laden
-        {% elif battery_discharge > 50 %}
-          Batterij Ontladen
-        {% elif grid_import > 50 %}
-          Netverbruik
-        {% elif pv_power > 50 %}
-          Zonneverbruik
-        {% else %}
-          Laag Verbruik
-        {% endif %}
+      # Sensors - Energie Stroomrichting
+      - name: "Energie Stroomrichting"
+        icon: mdi:transmission-tower-export
+        state: >
+          {% set pv_power = states('sensor.solar_vermogen_totaal')|float(0) %}
+          {% set grid_import = states('sensor.huisverbruik_van_net')|float(0) %}
+          {% set grid_export = states('sensor.teruglevering_naar_net')|float(0) %}
+          {% set battery_charge = states('sensor.batterij_laadvermogen')|float(0) %}
+          {% set battery_discharge = states('sensor.batterij_ontlading_vermogen')|float(0) %}
+          {% set consumption = states('sensor.connect_energiemeter_electricity_consumption')|float(0) %}
+          
+          {% if grid_export > 50 and battery_charge > 50 %}
+            Terugleveren & Batterij Laden
+          {% elif grid_export > 50 %}
+            Terugleveren
+          {% elif battery_charge > 50 %}
+            Batterij Laden
+          {% elif battery_discharge > 50 %}
+            Batterij Ontladen
+          {% elif grid_import > 50 %}
+            Netverbruik
+          {% elif pv_power > 50 %}
+            Zonneverbruik
+          {% else %}
+            Laag Verbruik
+          {% endif %}
