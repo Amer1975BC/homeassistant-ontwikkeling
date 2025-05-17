@@ -1,0 +1,101 @@
+# dashboard_sensors.yaml - Sensoren voor dashboard
+- sensor:
+    # Energy flow sensoren
+    - name: "Zonnestroom Direct Verbruikt Vandaag (dashboard)"
+      unit_of_measurement: "kWh"
+      state_class: total
+      device_class: energy
+      state: >
+        {% set uit_zon = states('sensor.huisverbruik_van_zon')|float(0) %}
+        {% set uren = now().hour + now().minute / 60 %}
+        {% if uren > 0 %}
+          {{ (uit_zon * uren / 1000)|round(2) }}
+        {% else %}
+          0
+        {% endif %}
+      
+    - name: "Zonnestroom Naar Batterij Vandaag"
+      unit_of_measurement: "kWh"
+      state_class: total
+      device_class: energy
+      state: >
+        {{ states('sensor.thuisbatterij_today')|float(0)|round(2) }}
+      
+    - name: "Teruglevering Vandaag"
+      unit_of_measurement: "kWh"
+      state_class: total
+      device_class: energy
+      state: >
+        {{ states('sensor.zonneplan_electricity_returned_today')|float(0)|round(2) }}
+      
+    - name: "Batterij Naar Huis Vandaag"
+      unit_of_measurement: "kWh"
+      state_class: total
+      device_class: energy
+      state: >
+        {{ states('sensor.thuisbatterij_delivery_today')|float(0)|round(2) }}
+      
+    - name: "Netstroom Verbruikt Vandaag"
+      unit_of_measurement: "kWh"
+      state_class: total
+      device_class: energy
+      state: >
+        {{ states('sensor.zonneplan_electricity_consumption_today')|float(0)|round(2) }}
+    # Zelfvoorziening percentage
+    - name: "Percentage Zelfvoorziening Elektriciteit"
+      unit_of_measurement: "%"
+      state_class: measurement
+      icon: mdi:solar-power
+      state: >
+        {% set totaal_verbruik = states('sensor.zonneplan_electricity_consumption_today')|float(0) + 
+                               states('sensor.dagelijks_zon_verbruik_correct')|float(0) + 
+                               states('sensor.thuisbatterij_delivery_today')|float(0) %}
+        {% set zelf_opgewekt = states('sensor.dagelijks_zon_verbruik_correct')|float(0) + 
+                             states('sensor.thuisbatterij_delivery_today')|float(0) %}
+        {% if totaal_verbruik > 0 %}
+          {{ (zelf_opgewekt / totaal_verbruik * 100)|round(1) }}
+        {% else %}
+          0
+        {% endif %}
+    # Utility sensoren
+    - name: "Gas Verbruik Vandaag"
+      unit_of_measurement: "m³"
+      state_class: total
+      device_class: gas
+      state: >
+        {{ states('sensor.zonneplan_gas_consumption_today')|float(0)|round(2) }}
+        
+    - name: "Water Verbruik Vandaag"
+      unit_of_measurement: "m³"
+      state_class: total
+      device_class: water
+      icon: mdi:water
+      state: >
+        {% if states('sensor.water_dagelijks') != 'unknown' and states('sensor.water_dagelijks') != 'unavailable' %}
+          {{ states('sensor.water_dagelijks')|float(0)|round(2) }}
+        {% else %}
+          {% set waterverbruik = states('input_number.water_meter')|float(0) %}
+          {{ waterverbruik|round(2) }}
+        {% endif %}
+        
+    # Kosten sensoren
+    - name: "Gas Verbruik Kosten Vandaag" 
+      unit_of_measurement: "EUR"
+      state_class: total
+      device_class: monetary
+      icon: mdi:cash
+      state: >
+        {% set verbruik = states('sensor.gas_verbruik_vandaag')|float(0) %}
+        {# Pas dit aan naar de werkelijke gasprijs #}
+        {% set gas_prijs = 0.85 %}  
+        {{ (verbruik * gas_prijs) | round(2) }}
+    
+    - name: "Water Verbruik Kosten Vandaag"
+      unit_of_measurement: "EUR"
+      state_class: total
+      device_class: monetary
+      icon: mdi:cash
+      state: >
+        {% set verbruik = states('sensor.water_verbruik_vandaag')|float(0) %}
+        {% set water_prijs = states('input_number.water_kosten_per_kuub')|float(1.35) %}  
+        {{ (verbruik * water_prijs) | round(2) }}

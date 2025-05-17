@@ -1,0 +1,59 @@
+sensor:
+  - name: "Dagelijkse Stroomprijs Details"
+    state: "{{ states('sensor.zonneplan_current_electricity_tariff')|float(0) }}"
+    icon: mdi:currency-eur
+    unit_of_measurement: "€/kWh"
+    attributes:
+      hours_priced_today: >
+        {% set current_hour = now().hour %}
+        {% set today = now().strftime('%Y-%m-%d') %}
+        {% set hours = [] %}
+        
+        {% for h in range(24) %}
+          {% set hour_str = '%02d:00:00' | format(h) %}
+          {% set timestamp = today ~ ' ' ~ hour_str %}
+          {% set hours = hours + [timestamp] %}
+        {% endfor %}
+        
+        {{ hours }}
+      
+      prices_today: >
+        {% set forecast_hour_sensors = [
+            'sensor.zonneplan_forecast_tariff_hour_1',
+            'sensor.zonneplan_forecast_tariff_hour_2',
+            'sensor.zonneplan_forecast_tariff_hour_3',
+            'sensor.zonneplan_forecast_tariff_hour_4',
+            'sensor.zonneplan_forecast_tariff_hour_5',
+            'sensor.zonneplan_forecast_tariff_hour_6',
+            'sensor.zonneplan_forecast_tariff_hour_7',
+            'sensor.zonneplan_forecast_tariff_hour_8'
+          ] %}
+        
+        {% set prices = [] %}
+        {% set current_price = states('sensor.zonneplan_current_electricity_tariff')|float(0) %}
+        {% set current_hour = now().hour %}
+        
+        {# Vul uren voor de huidige tijd in met huidige prijs #}
+        {% for h in range(current_hour) %}
+          {% set prices = prices + [current_price] %}
+        {% endfor %}
+        
+        {# Voeg de huidige prijs toe voor dit uur #}
+        {% set prices = prices + [current_price] %}
+        
+        {# Voeg de voorspelde prijzen toe voor de komende uren #}
+        {% set remaining_hours = 23 - current_hour %}
+        {% set forecast_hours = [current_hour + 1, current_hour + 2, current_hour + 3, current_hour + 4, 
+                                current_hour + 5, current_hour + 6, current_hour + 7, current_hour + 8] %}
+        
+        {% for h in range(current_hour + 1, 24) %}
+          {% if h - current_hour - 1 < forecast_hour_sensors|length %}
+            {% set forecast_price = states(forecast_hour_sensors[h - current_hour - 1])|float(current_price) %}
+            {% set prices = prices + [forecast_price] %}
+          {% else %}
+            {# Als we geen voorspelling hebben, gebruiken we de laatste bekende prijs #}
+            {% set prices = prices + [current_price] %}
+          {% endif %}
+        {% endfor %}
+        
+        {{ prices }}

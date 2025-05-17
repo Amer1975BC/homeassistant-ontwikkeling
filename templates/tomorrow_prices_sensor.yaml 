@@ -1,0 +1,71 @@
+sensor:
+  - name: "Stroomprijzen Morgen Data"
+    state: >
+      {% if states('sensor.zonneplan_forecast_tariff_hour_1') != 'unknown' %}
+        {{ states('sensor.zonneplan_forecast_tariff_hour_1')|float(0) }}
+      {% else %}
+        0
+      {% endif %}
+    unit_of_measurement: "€/kWh"
+    icon: mdi:currency-eur
+    attributes:
+      hours: >
+        {% set tomorrow = (now() + timedelta(days=1)).strftime('%Y-%m-%d') %}
+        {% set hours = [] %}
+        
+        {% for h in range(24) %}
+          {% set hour_str = '%02d:00:00' | format(h) %}
+          {% set timestamp = tomorrow ~ ' ' ~ hour_str %}
+          {% set hours = hours + [timestamp] %}
+        {% endfor %}
+        
+        {{ hours }}
+      
+      prices: >
+        {% set tomorrow_prices = [] %}
+        {% set avg_price = 0 %}
+        
+        {# We hebben mogelijk geen prijzen voor morgen, gebruik dan een inschatting #}
+        {% set forecast_sensors = [
+          'sensor.zonneplan_forecast_tariff_hour_1',
+          'sensor.zonneplan_forecast_tariff_hour_2',
+          'sensor.zonneplan_forecast_tariff_hour_3',
+          'sensor.zonneplan_forecast_tariff_hour_4',
+          'sensor.zonneplan_forecast_tariff_hour_5',
+          'sensor.zonneplan_forecast_tariff_hour_6',
+          'sensor.zonneplan_forecast_tariff_hour_7',
+          'sensor.zonneplan_forecast_tariff_hour_8'
+        ] %}
+        
+        {# Bereken gemiddelde van bekende prijzen #}
+        {% set sum = 0 %}
+        {% set count = 0 %}
+        {% for sensor in forecast_sensors %}
+          {% if states(sensor) != 'unknown' %}
+            {% set sum = sum + states(sensor)|float(0) %}
+            {% set count = count + 1 %}
+          {% endif %}
+        {% endfor %}
+        
+        {% if count > 0 %}
+          {% set avg_price = sum / count %}
+        {% else %}
+          {% set avg_price = states('sensor.zonneplan_current_electricity_tariff')|float(0) %}
+        {% endif %}
+        
+        {# Vul in met geschatte prijzen #}
+        {% for h in range(24) %}
+          {# Simuleer een dagpatroon met lagere prijzen 's nachts #}
+          {% if h < 6 or h >= 22 %}
+            {% set price_factor = 0.8 %}  # 20% lager 's nachts
+          {% elif h >= 16 and h < 22 %}
+            {% set price_factor = 1.2 %}  # 20% hoger in de avond
+          {% else %}
+            {% set price_factor = 1.0 %}  # Normaal overdag
+          {% endif %}
+          
+          {% set estimated_price = avg_price * price_factor %}
+          {% set tomorrow_prices = tomorrow_prices + [estimated_price|round(4)] %}
+        {% endfor %}
+        
+        {{ tomorrow_prices }}

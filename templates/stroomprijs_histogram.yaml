@@ -1,0 +1,34 @@
+template:
+  - sensor:
+      - name: "Stroomprijs Histogram"
+        icon: mdi:chart-histogram
+        state: >
+          {% set forecast = state_attr('sensor.zonneplan_current_electricity_tariff', 'forecast') %}
+          {{ forecast | length if forecast else 0 }}
+        attributes:
+          histogram: >
+            {% set forecast = state_attr('sensor.zonneplan_current_electricity_tariff', 'forecast') %}
+            {% if forecast %}
+              {% set buckets = {
+                'Zeer Laag': {'min': 0, 'max': 0.15, 'count': 0},
+                'Laag': {'min': 0.15, 'max': 0.20, 'count': 0},
+                'Gemiddeld': {'min': 0.20, 'max': 0.25, 'count': 0},
+                'Hoog': {'min': 0.25, 'max': 0.30, 'count': 0},
+                'Zeer Hoog': {'min': 0.30, 'max': 99, 'count': 0}
+              } %}
+              {% for entry in forecast %}
+                {% set price = entry.electricity_price / 10000000 %}
+                {% for name, bucket in buckets.items() %}
+                  {% if bucket.min <= price < bucket.max %}
+                    {% set _ = bucket.update({'count': bucket.count + 1}) %}
+                  {% endif %}
+                {% endfor %}
+              {% endfor %}
+              {% set values = [] %}
+              {% for name in ['Zeer Laag', 'Laag', 'Gemiddeld', 'Hoog', 'Zeer Hoog'] %}
+                {% set values = values + [buckets[name].count] %}
+              {% endfor %}
+              {{ values }}
+            {% else %}
+              [0, 0, 0, 0, 0]
+            {% endif %}

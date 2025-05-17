@@ -1,0 +1,74 @@
+# dashboard_utility_sensors.yaml - Maandelijkse verbruikssensoren
+- sensor:
+    # Maandelijkse verbruikssensoren
+    - name: "P1 Meter Gas Monthly Usage"
+      unit_of_measurement: "m³"
+      state_class: total
+      device_class: gas
+      icon: mdi:fire
+      state: >
+        {% if states('sensor.monthly_gas_usage') != 'unknown' and states('sensor.monthly_gas_usage') != 'unavailable' %}
+          {{ states('sensor.monthly_gas_usage')|float(0)|round(2) }}
+        {% else %}
+          {% set daily = states('sensor.zonneplan_gas_consumption_today')|float(0) %}
+          {% set days_in_month = now().day %}
+          {{ (daily * days_in_month)|round(2) }}
+        {% endif %}
+    
+    - name: "Water Monthly Usage"
+      unit_of_measurement: "m³"
+      state_class: total
+      device_class: water
+      icon: mdi:water
+      state: >
+        {% if states('sensor.water_maandelijks') != 'unknown' and states('sensor.water_maandelijks') != 'unavailable' %}
+          {{ states('sensor.water_maandelijks')|float(0)|round(2) }}
+        {% else %}
+          {% set daily = states('sensor.water_verbruik_vandaag')|float(0) %}
+          {% set days_in_month = now().day %}
+          {{ (daily * days_in_month)|round(2) if days_in_month > 0 else 0 }}
+        {% endif %}
+    
+    # Temperatuur sensor
+    - name: "Buiten Temperatuur"
+      unit_of_measurement: "°C"
+      state_class: measurement
+      device_class: temperature
+      icon: mdi:thermometer
+      state: >
+        {% if states('weather.home') != 'unknown' and states('weather.home') != 'unavailable' and state_attr('weather.home', 'temperature') is not none %}
+          {{ state_attr('weather.home', 'temperature')|float(0)|round(1) }}
+        {% else %}
+          15
+        {% endif %}
+    
+    # Maandelijkse kosten sensoren
+    - name: "Monthly Electricity Cost"
+      unit_of_measurement: "EUR"
+      state_class: total
+      device_class: monetary
+      icon: mdi:cash
+      state: >
+        {% set tarief = states('input_number.energieprijs_elektriciteit')|float(0.30) %}
+        {% set verbruik = states('sensor.energy_import')|float(0) %}
+        {{ (verbruik * tarief)|round(2) }}
+    
+    - name: "Monthly Gas Cost"
+      unit_of_measurement: "EUR"
+      state_class: total
+      device_class: monetary
+      icon: mdi:cash
+      state: >
+        {% set tarief = states('sensor.zonneplan_current_gas_tariff')|float(0.85) if states('sensor.zonneplan_current_gas_tariff') != 'unknown' and states('sensor.zonneplan_current_gas_tariff') != 'unavailable' else 0.85 %}
+        {% set verbruik = states('sensor.p1_meter_gas_monthly_usage')|float(0) %}
+        {{ (verbruik * tarief)|round(2) }}
+    
+    - name: "Monthly Water Cost"
+      unit_of_measurement: "EUR"
+      state_class: total
+      device_class: monetary
+      icon: mdi:cash
+      state: >
+        {% set tarief = states('input_number.water_kosten_per_kuub')|float(1.35) %}
+        {% set verbruik = states('sensor.water_monthly_usage')|float(0) %}
+        {{ (verbruik * tarief)|round(2) }}

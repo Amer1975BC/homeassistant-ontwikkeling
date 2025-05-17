@@ -29,7 +29,8 @@ script: !include scripts.yaml
 scene: !include scenes.yaml
 
 # Template sensor includes
-template: !include template.yaml
+template: !include_dir_merge_list templates/
+
 
 # InfluxDB configuratie
 influxdb:

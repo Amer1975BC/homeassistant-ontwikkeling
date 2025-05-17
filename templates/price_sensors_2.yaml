@@ -1,0 +1,86 @@
+- sensor:
+    # Minimum en maximum prijzen morgen
+    - name: "Stroomprijs Min Morgen"
+      unit_of_measurement: "EUR/kWh"
+      state_class: total
+      device_class: monetary
+      icon: mdi:arrow-down-bold
+      state: >
+        {% set prices = state_attr('sensor.zonneplan_current_electricity_tariff', 'prices_tomorrow') %}
+        {% if prices and prices|length > 0 %}
+          {{ (prices | min) | round(3) }}
+        {% else %}
+          0
+        {% endif %}
+
+    - name: "Stroomprijs Max Morgen"
+      unit_of_measurement: "EUR/kWh"
+      state_class: total
+      device_class: monetary
+      icon: mdi:arrow-up-bold
+      state: >
+        {% set prices = state_attr('sensor.zonneplan_current_electricity_tariff', 'prices_tomorrow') %}
+        {% if prices and prices|length > 0 %}
+          {{ (prices | max) | round(3) }}
+        {% else %}
+          0
+        {% endif %}
+          
+    # Gemiddelde prijzen morgen
+    - name: "Stroomprijs Gemiddeld Morgen"
+      unit_of_measurement: "EUR/kWh"
+      state_class: total
+      device_class: monetary
+      icon: mdi:chart-line
+      state: >
+        {% set prices = state_attr('sensor.zonneplan_current_electricity_tariff', 'prices_tomorrow') %}
+        {% if prices and prices|length > 0 %}
+          {{ (prices | sum / prices | length) | round(3) }}
+        {% else %}
+          0
+        {% endif %}
+        
+    # Prijsvoorspelling voor volgende dag
+    - name: "Prijsvoorspelling"
+      icon: mdi:chart-line
+      state: >
+        {% set prices_tomorrow = state_attr('sensor.zonneplan_current_electricity_tariff', 'prices_tomorrow') %}
+        {% if prices_tomorrow and prices_tomorrow|length > 0 %}
+          {% set avg_tomorrow = prices_tomorrow|sum / prices_tomorrow|length %}
+          {% set avg_today = state_attr('sensor.zonneplan_current_electricity_tariff', 'prices_today')|sum / 
+                            state_attr('sensor.zonneplan_current_electricity_tariff', 'prices_today')|length %}
+          {% if avg_tomorrow < avg_today * 0.9 %}
+            Duidelijk lager
+          {% elif avg_tomorrow < avg_today %}
+            Iets lager
+          {% elif avg_tomorrow < avg_today * 1.1 %}
+            Ongeveer gelijk
+          {% elif avg_tomorrow < avg_today * 1.25 %}
+            Iets hoger
+          {% else %}
+            Duidelijk hoger
+          {% endif %}
+        {% else %}
+          Onbekend
+        {% endif %}
+      attributes:
+        template: >
+          {% set prices_today = state_attr('sensor.zonneplan_current_electricity_tariff', 'prices_today') %}
+          {% set prices_tomorrow = state_attr('sensor.zonneplan_current_electricity_tariff', 'prices_tomorrow') %}
+          {% if prices_today and prices_tomorrow %}
+            {% set avg_today = prices_today|sum / prices_today|length %}
+            {% set avg_tomorrow = prices_tomorrow|sum / prices_tomorrow|length %}
+            {% set change_pct = ((avg_tomorrow - avg_today) / avg_today * 100)|round %}
+            
+            {
+              "avg_today": {{ avg_today|round(3) }},
+              "avg_tomorrow": {{ avg_tomorrow|round(3) }},
+              "change_percentage": {{ change_pct }},
+              "min_today": {{ prices_today|min|round(3) }},
+              "max_today": {{ prices_today|max|round(3) }},
+              "min_tomorrow": {{ prices_tomorrow|min|round(3) }},
+              "max_tomorrow": {{ prices_tomorrow|max|round(3) }}
+            }
+          {% else %}
+            {}
+          {% endif %}
