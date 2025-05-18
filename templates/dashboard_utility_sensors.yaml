@@ -1,4 +1,3 @@
-template:
   - sensor:
       # Maandelijkse verbruikssensoren
       - name: "P1 Meter Gas Monthly Usage"

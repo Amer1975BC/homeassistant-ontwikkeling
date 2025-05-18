@@ -1,4 +1,3 @@
-template:
   - sensor:
       # Sensors - Inverterstatistieken
       - name: "Percentage Opwek Solaredge"

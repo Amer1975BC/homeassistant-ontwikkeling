@@ -1,4 +1,3 @@
-template:
   - sensor:
       - name: "Dagelijkse Stroomprijsdetails"  # Naam aangepast om te matchen met wat de grafiek verwacht
         state: "{{ states('sensor.zonneplan_current_electricity_tariff')|float(0) }}"

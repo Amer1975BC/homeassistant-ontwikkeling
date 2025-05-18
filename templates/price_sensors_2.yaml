@@ -1,4 +1,3 @@
-template:
   - sensor:
       # Minimum en maximum prijzen morgen
       - name: "Stroomprijs Min Morgen"

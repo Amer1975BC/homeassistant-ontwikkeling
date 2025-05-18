@@ -1,4 +1,3 @@
-template:
   - sensor:
       - name: "Beste Laadtijd Batterij"
         icon: mdi:battery-charging
@@ -33,8 +32,7 @@ template:
           {% else %}
             Geen data beschikbaar
           {% endif %}
-
-  - sensor:
+          
       - name: "Verbruik Per Dagdeel"
         unit_of_measurement: "kWh" 
         state: >
@@ -54,24 +52,36 @@ template:
             
             {% set stats = state_attr(consumption_entity, 'hourly_stats') %}
             {% if stats %}
+              {# Gebruik een alternatieve aanpak zonder update() #}
+              {% set ochtend_sum = 0 %}
+              {% set middag_sum = 0 %}
+              {% set avond_sum = 0 %}
+              {% set nacht_sum = 0 %}
+              
               {% for hour, value in stats.items() %}
                 {% set hour_int = hour|int %}
-                {% for name, dagdeel in dagdelen.items() %}
-                  {% if dagdeel.start <= hour_int < dagdeel.end %}
-                    {% set _dummy = dagdelen[name].update({'sum': dagdeel.sum + value|float(0)}) %}
-                  {% endif %}
-                {% endfor %}
+                {% if 6 <= hour_int < 12 %}
+                  {% set ochtend_sum = ochtend_sum + value|float(0) %}
+                {% elif 12 <= hour_int < 18 %}
+                  {% set middag_sum = middag_sum + value|float(0) %}
+                {% elif 18 <= hour_int < 24 %}
+                  {% set avond_sum = avond_sum + value|float(0) %}
+                {% elif 0 <= hour_int < 6 %}
+                  {% set nacht_sum = nacht_sum + value|float(0) %}
+                {% endif %}
               {% endfor %}
               
-              {% set chart_data = [] %}
-              {% for name, dagdeel in dagdelen.items() %}
-                {% set _dummy = chart_data.append({
-                  'name': name,
-                  'value': dagdeel.sum|round(2)
-                }) %}
-              {% endfor %}
+              {% set chart_data = [
+                {'name': 'Ochtend (6-12)', 'value': ochtend_sum|round(2)},
+                {'name': 'Middag (12-18)', 'value': middag_sum|round(2)},
+                {'name': 'Avond (18-24)', 'value': avond_sum|round(2)},
+                {'name': 'Nacht (0-6)', 'value': nacht_sum|round(2)}
+              ] %}
               
               {{ chart_data }}
+            {% else %}
+              []
+            {% endif %}
             {% else %}
               []
             {% endif %}

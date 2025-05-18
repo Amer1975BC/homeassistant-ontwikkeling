@@ -1,4 +1,3 @@
-template:
   - sensor:
       # Prijssensoren voor dashboard
       - name: "Dynamische Energie Prijs"

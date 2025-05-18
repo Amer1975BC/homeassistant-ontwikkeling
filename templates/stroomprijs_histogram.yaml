@@ -1,34 +1,50 @@
-template:
   - sensor:
       - name: "Stroomprijs Histogram"
         icon: mdi:chart-histogram
         state: >
-          {% set forecast = state_attr('sensor.zonneplan_current_electricity_tariff', 'forecast') %}
-          {{ forecast | length if forecast else 0 }}
+          {% set prices = state_attr('sensor.zonneplan_current_electricity_tariff', 'prices_today') %}
+          {{ (prices | length) if prices else 0 }}
         attributes:
-          histogram: >
-            {% set forecast = state_attr('sensor.zonneplan_current_electricity_tariff', 'forecast') %}
-            {% if forecast %}
+          histogramdata: >
+            {% set prices = state_attr('sensor.zonneplan_current_electricity_tariff', 'prices_today') %}
+            {% if prices %}
               {% set buckets = {
                 'Zeer Laag': {'min': 0, 'max': 0.15, 'count': 0},
                 'Laag': {'min': 0.15, 'max': 0.20, 'count': 0},
                 'Gemiddeld': {'min': 0.20, 'max': 0.25, 'count': 0},
                 'Hoog': {'min': 0.25, 'max': 0.30, 'count': 0},
-                'Zeer Hoog': {'min': 0.30, 'max': 99, 'count': 0}
+                'Zeer Hoog': {'min': 0.30, 'max': 999, 'count': 0}
               } %}
-              {% for entry in forecast %}
-                {% set price = entry.electricity_price / 10000000 %}
-                {% for name, bucket in buckets.items() %}
-                  {% if bucket.min <= price < bucket.max %}
-                    {% set _ = bucket.update({'count': bucket.count + 1}) %}
-                  {% endif %}
-                {% endfor %}
+              
+              {% set zeer_laag_count = 0 %}
+              {% set laag_count = 0 %}
+              {% set gemiddeld_count = 0 %}
+              {% set hoog_count = 0 %}
+              {% set zeer_hoog_count = 0 %}
+              
+              {% for price in prices %}
+                {% if 0 <= price < 0.15 %}
+                  {% set zeer_laag_count = zeer_laag_count + 1 %}
+                {% elif 0.15 <= price < 0.20 %}
+                  {% set laag_count = laag_count + 1 %}
+                {% elif 0.20 <= price < 0.25 %}
+                  {% set gemiddeld_count = gemiddeld_count + 1 %}
+                {% elif 0.25 <= price < 0.30 %}
+                  {% set hoog_count = hoog_count + 1 %}
+                {% elif price >= 0.30 %}
+                  {% set zeer_hoog_count = zeer_hoog_count + 1 %}
+                {% endif %}
               {% endfor %}
-              {% set values = [] %}
-              {% for name in ['Zeer Laag', 'Laag', 'Gemiddeld', 'Hoog', 'Zeer Hoog'] %}
-                {% set values = values + [buckets[name].count] %}
-              {% endfor %}
-              {{ values }}
+              
+              {% set chart_data = [
+                {'name': 'Zeer Laag', 'count': zeer_laag_count, 'percentage': ((zeer_laag_count / prices|length * 100)|round)},
+                {'name': 'Laag', 'count': laag_count, 'percentage': ((laag_count / prices|length * 100)|round)},
+                {'name': 'Gemiddeld', 'count': gemiddeld_count, 'percentage': ((gemiddeld_count / prices|length * 100)|round)},
+                {'name': 'Hoog', 'count': hoog_count, 'percentage': ((hoog_count / prices|length * 100)|round)},
+                {'name': 'Zeer Hoog', 'count': zeer_hoog_count, 'percentage': ((zeer_hoog_count / prices|length * 100)|round)}
+              ] %}
+              
+              {{ chart_data }}
             {% else %}
-              [0, 0, 0, 0, 0]
+              []
             {% endif %}

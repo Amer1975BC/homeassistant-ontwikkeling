@@ -1,85 +1,40 @@
-template:
-  - sensor:
-      - name: "Gemiddeld Verbruik Ochtend"
-        unit_of_measurement: "kWh"
-        state_class: measurement
-        device_class: energy
-        icon: mdi:weather-sunny
-        state: >
-          {% set consumption_entity = 'sensor.connect_energiemeter_electricity_consumption' %}
-          {% set stats = state_attr(consumption_entity, 'hourly_stats') %}
-          {% set sum = 0 %}
-          {% if stats %}
-            {% for hour, value in stats.items() %}
-              {% set hour_int = hour|int %}
-              {% if 6 <= hour_int < 12 %}
-                {% set sum = sum + value|float(0) %}
-              {% endif %}
-            {% endfor %}
-            {{ sum|round(2) }}
-          {% else %}
-            0
-          {% endif %}
+- sensor:
+    - name: "Gemiddeld Verbruik Ochtend Berekend"
+      unique_id: gemiddeld_verbruik_ochtend_calc
+      unit_of_measurement: "kWh"
+      state_class: measurement
+      device_class: energy
+      icon: mdi:weather-sunny
+      state: >
+        {% set daily_consumption = states('sensor.zonneplan_electricity_consumption_today') | float(0) %}
+        {{ (daily_consumption * 0.25) | round(2) }}
       
-      - name: "Gemiddeld Verbruik Middag"
-        unit_of_measurement: "kWh"
-        state_class: measurement
-        device_class: energy
-        icon: mdi:weather-partly-cloudy
-        state: >
-          {% set consumption_entity = 'sensor.connect_energiemeter_electricity_consumption' %}
-          {% set stats = state_attr(consumption_entity, 'hourly_stats') %}
-          {% set sum = 0 %}
-          {% if stats %}
-            {% for hour, value in stats.items() %}
-              {% set hour_int = hour|int %}
-              {% if 12 <= hour_int < 18 %}
-                {% set sum = sum + value|float(0) %}
-              {% endif %}
-            {% endfor %}
-            {{ sum|round(2) }}
-          {% else %}
-            0
-          {% endif %}
+    - name: "Gemiddeld Verbruik Middag Berekend"
+      unique_id: gemiddeld_verbruik_middag_calc
+      unit_of_measurement: "kWh"
+      state_class: measurement
+      device_class: energy
+      icon: mdi:weather-partly-cloudy
+      state: >
+        {% set daily_consumption = states('sensor.zonneplan_electricity_consumption_today') | float(0) %}
+        {{ (daily_consumption * 0.30) | round(2) }}
       
-      - name: "Gemiddeld Verbruik Avond"
-        unit_of_measurement: "kWh"
-        state_class: measurement
-        device_class: energy
-        icon: mdi:weather-sunset
-        state: >
-          {% set consumption_entity = 'sensor.connect_energiemeter_electricity_consumption' %}
-          {% set stats = state_attr(consumption_entity, 'hourly_stats') %}
-          {% set sum = 0 %}
-          {% if stats %}
-            {% for hour, value in stats.items() %}
-              {% set hour_int = hour|int %}
-              {% if 18 <= hour_int < 24 %}
-                {% set sum = sum + value|float(0) %}
-              {% endif %}
-            {% endfor %}
-            {{ sum|round(2) }}
-          {% else %}
-            0
-          {% endif %}
+    - name: "Gemiddeld Verbruik Avond Berekend"
+      unique_id: gemiddeld_verbruik_avond_calc
+      unit_of_measurement: "kWh"
+      state_class: measurement
+      device_class: energy
+      icon: mdi:weather-sunset
+      state: >
+        {% set daily_consumption = states('sensor.zonneplan_electricity_consumption_today') | float(0) %}
+        {{ (daily_consumption * 0.35) | round(2) }}
       
-      - name: "Gemiddeld Verbruik Nacht"
-        unit_of_measurement: "kWh"
-        state_class: measurement
-        device_class: energy
-        icon: mdi:weather-night
-        state: >
-          {% set consumption_entity = 'sensor.connect_energiemeter_electricity_consumption' %}
-          {% set stats = state_attr(consumption_entity, 'hourly_stats') %}
-          {% set sum = 0 %}
-          {% if stats %}
-            {% for hour, value in stats.items() %}
-              {% set hour_int = hour|int %}
-              {% if 0 <= hour_int < 6 %}
-                {% set sum = sum + value|float(0) %}
-              {% endif %}
-            {% endfor %}
-            {{ sum|round(2) }}
-          {% else %}
-            0
-          {% endif %}
+    - name: "Gemiddeld Verbruik Nacht Berekend"
+      unique_id: gemiddeld_verbruik_nacht_calc
+      unit_of_measurement: "kWh"
+      state_class: measurement
+      device_class: energy
+      icon: mdi:weather-night
+      state: >
+        {% set daily_consumption = states('sensor.zonneplan_electricity_consumption_today') | float(0) %}
+        {{ (daily_consumption * 0.10) | round(2) }}

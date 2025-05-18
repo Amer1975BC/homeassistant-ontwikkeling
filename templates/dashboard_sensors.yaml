@@ -1,4 +1,3 @@
-template:
   - sensor:
       # Energy flow sensoren
       - name: "Zonnestroom Direct Verbruikt Vandaag (dashboard)"

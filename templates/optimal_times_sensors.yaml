@@ -1,4 +1,3 @@
-template:
   - sensor:
       - name: "Goedkoopste Uur Vandaag"
         icon: mdi:clock-time-eight-outline
@@ -35,7 +34,7 @@ template:
           
           {# Verzamel alle prijzen voor vandaag inclusief forecasts #}
           {% for h in range(current_hour + 1, 24) %}
-            {% if h - current_hour - 1 < 8 %}  # We hebben 8 forecast uren
+            {% if h - current_hour - 1 < 8 %}  
               {% set sensor_name = 'sensor.zonneplan_forecast_tariff_hour_' ~ (h - current_hour) %}
               {% if states(sensor_name) != 'unknown' and states(sensor_name)|float > 0 %}
                 {% set prices_today = prices_today + [(h, states(sensor_name)|float)] %}
@@ -76,7 +75,7 @@ template:
           
           {# Verzamel alle prijzen voor vandaag inclusief forecasts #}
           {% for h in range(current_hour + 1, 24) %}
-            {% if h - current_hour - 1 < 8 %}  # We hebben 8 forecast uren
+            {% if h - current_hour - 1 < 8 %}  {# We hebben 8 forecast uren #}
               {% set sensor_name = 'sensor.zonneplan_forecast_tariff_hour_' ~ (h - current_hour) %}
               {% if states(sensor_name) != 'unknown' and states(sensor_name)|float > 0 %}
                 {% set prices_today = prices_today + [(h, states(sensor_name)|float)] %}

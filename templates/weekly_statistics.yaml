@@ -1,4 +1,3 @@
-template:
   - sensor:
       # Wekelijkse elektriciteit statistieken
       - name: "Weekly Electricity Consumption"

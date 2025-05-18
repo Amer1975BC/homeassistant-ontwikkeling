@@ -1,4 +1,3 @@
-template:
   - binary_sensor:
       - name: "Iemand in Zone 2"
         unique_id: target_in_zone_2

@@ -1,4 +1,3 @@
-template:
   - sensor:
       # Gas sensoren op basis van Zonneplan integratie
       - name: "P1 Meter Gas Daily Usage"

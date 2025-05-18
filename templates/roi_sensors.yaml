@@ -1,4 +1,3 @@
-template:
   - sensor:
       # ROI (Return on Investment) sensoren voor zonnepanelen
       - name: "Zonnepanelen ROI Percentage"

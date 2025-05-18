@@ -1,4 +1,4 @@
-var version = "0.0.19";
+var version = "0.0.21";
 var repository = {
 	type: "git",
 	url: "https://github.com/davet2001/homeassistant-energy-sankey-card"
@@ -2546,7 +2546,7 @@ const POWER_CARD_NAME = `${PREFIX_NAME}-power-flow-card`;
 const POWER_CARD_EDITOR_NAME = `${POWER_CARD_NAME}-editor`;
 const ENERGY_CARD_NAME = `${PREFIX_NAME}-energy-elec-flow-card`;
 const ENERGY_CARD_EDITOR_NAME = `${ENERGY_CARD_NAME}-editor`;
-const HIDE_CONSUMERS_BELOW_THRESHOLD_W = 100;
+const HIDE_CONSUMERS_BELOW_THRESHOLD_W = 20;
 const HIDE_CONSUMERS_BELOW_THRESHOLD_KWH = 0.1;
 const GENERIC_LABELS = [
     "appearance",
@@ -3039,7 +3039,7 @@ var editor = {
 			power_to_grid_entity: "Power to grid (optional)",
 			group_small: "Group low values together",
 			generation_entity: "Power from generation (optional)",
-			hide_small_consumers: "Group consumers below 100W",
+			hide_small_consumers: "Group consumers below 20W",
 			invert_battery_flows: "Battery flows are positive for charging",
 			battery_charge_only_from_generation: "Batteries can only charge from generated power",
 			battery_hint_std: "Power from battery (one combined in/out per battery, positive = discharging)",
@@ -4584,6 +4584,8 @@ const FONT_SIZE_PX = 16;
 const ICON_SIZE_PX = 24;
 const SVG_LHS_VISIBLE_WIDTH = 110;
 const PAD_ANTIALIAS = 0.5;
+const UNTRACKED_ID = "untracked";
+const OTHER_ID = "other";
 // Color mixing from here: https://stackoverflow.com/a/76752232
 function hex2dec(hex) {
     const matched = hex.replace("#", "").match(/.{2}/g);
@@ -4969,8 +4971,8 @@ let ElecSankey = class ElecSankey extends s$1 {
         }
         // Whatever battery out is not going to the grid must be going to consumers.
         let batteriesToConsumersTemp = batteryInTotal - batteriesToGridTemp;
-        // The user can specify that their batteries are only charged from 
-        // generation. 
+        // The user can specify that their batteries are only charged from
+        // generation.
         if (this.batteryChargeOnlyFromGeneration) {
             // In this case, we assume that all the flow into the
             // batteries is coming from generation, and the grid is not contributing
@@ -4979,7 +4981,7 @@ let ElecSankey = class ElecSankey extends s$1 {
             generationToBatteriesTemp = batteriesOutTotal;
         }
         else {
-            // Otherwise, we proceed on the basis that the full flow into the battery 
+            // Otherwise, we proceed on the basis that the full flow into the battery
             // is coming from the grid (as far as the grid input allows). If there is
             // more flow coming into the batteries than the grid would allow, we
             // assume that the additional flow is coming from generation.
@@ -5109,7 +5111,7 @@ let ElecSankey = class ElecSankey extends s$1 {
                 }
                 : undefined;
         this._untrackedConsumerRoute = {
-            id: "untracked",
+            id: UNTRACKED_ID,
             text: "Untracked",
             rate: untrackedConsumer > 0 ? untrackedConsumer : 0,
         };
@@ -5126,12 +5128,13 @@ let ElecSankey = class ElecSankey extends s$1 {
             (this._untrackedConsumerRoute ? this._untrackedConsumerRoute.rate : 0);
         this._batteriesToGridRate = batteriesToGridTemp;
         this._batteriesToConsumersRate = batteriesToConsumersTemp;
+        const batteriesTotal = batteriesToGridTemp + batteriesToConsumersTemp;
         this._generationToConsumersRate = generationToConsumersTemp;
         this._generationToBatteriesRate = generationToBatteriesTemp;
         this._generationToGridRate = generationToGridTemp;
         this._gridToBatteriesRate = gridToBatteriesTemp;
         this._gridToConsumersRate = gridToConsumersTemp;
-        const widest_trunk = Math.max(genTotal, gridInTotal, consumerTotal, 1.0);
+        const widest_trunk = Math.max(genTotal, gridInTotal, consumerTotal, batteriesTotal, 1.0);
         this._rateToWidthMultplier = TARGET_SCALED_TRUNK_WIDTH / widest_trunk;
     }
     _rateToWidth(rate) {
@@ -5433,15 +5436,22 @@ let ElecSankey = class ElecSankey extends s$1 {
   `;
         return svgRet;
     }
+    _getExtrasLength() {
+        return this.constructor.extrasLength;
+    }
     _insertExtras(_topLeftX, _topLeftY, _width, _color, _route) {
-        return [0, b ``];
+        return b ``;
     }
     _renderConsumerFlow(topLeftX, topLeftY, topRightX, topRightY, consumer, color, svgScaleX = 1, count = 1) {
+        var _a;
         const width = this._rateToWidth(consumer.rate);
-        const xEnd = topRightX;
         const yEnd = topRightY + width / 2;
         const svgFlow = renderFlowByCorners(topLeftX, topLeftY, topLeftX, topLeftY + width, topRightX + PAD_ANTIALIAS, topRightY, topRightX + PAD_ANTIALIAS, topRightY + width, "consumer", color);
-        const [extrasLength, svgExtras] = this._insertExtras(topRightX, topRightY, width, color, consumer);
+        const extrasLength = this._getExtrasLength();
+        const svgExtras = this._insertExtras(topRightX, topRightY, width, color, consumer);
+        const id = [UNTRACKED_ID, OTHER_ID].includes((_a = consumer.id) !== null && _a !== void 0 ? _a : "")
+            ? undefined
+            : consumer.id;
         const divHeight = CONSUMER_LABEL_HEIGHT;
         const divRet = x `<div
       class="label elecroute-label-consumer"
@@ -5449,25 +5459,27 @@ let ElecSankey = class ElecSankey extends s$1 {
       top: ${yEnd * svgScaleX -
             (count * divHeight) / 2}px; margin: ${-divHeight / 2}px 0 0 0;"
     >
-      ${this._generateLabelDiv(consumer.id, undefined, consumer.text, consumer.rate)}
+      ${this._generateLabelDiv(id, undefined, consumer.text, consumer.rate)}
     </div>`;
-        const svgRet = b `
-      ${svgFlow}
-      ${svgExtras}
-      <polygon points="${xEnd + extrasLength},${yEnd - width / 2}
-        ${xEnd + extrasLength},${yEnd + width / 2}
-        ${xEnd + extrasLength + ARROW_HEAD_LENGTH},${yEnd}"
+        const svgArrow = b `
+      <polygon points="${extrasLength},${yEnd - width / 2}
+        ${extrasLength},${yEnd + width / 2}
+        ${extrasLength + ARROW_HEAD_LENGTH},${yEnd}"
         style="fill:${color}" />
     `;
         const bottomLeftY = topLeftY + (consumer.rate !== 0 ? width : 0);
         const bottomRightY = topRightY + width;
-        return [divRet, svgRet, bottomLeftY, bottomRightY];
+        return [divRet, svgFlow, svgExtras, svgArrow, bottomLeftY, bottomRightY];
     }
     _getGroupedConsumerRoutes() {
         let consumerRoutes = {};
-        consumerRoutes = structuredClone(this.consumerRoutes);
+        const entries = Object.entries(this.consumerRoutes);
+        entries.sort(([, routeA], [, routeB]) => routeB.rate - routeA.rate);
+        for (const [key, val] of Object.entries(entries)) {
+            consumerRoutes[key] = val[1];
+        }
         let groupedConsumer = {
-            id: "other",
+            id: OTHER_ID,
             text: "Other",
             rate: 0,
         };
@@ -5507,9 +5519,11 @@ let ElecSankey = class ElecSankey extends s$1 {
     }
     _renderConsumerFlows(y1, y4, color, svgScaleX) {
         const divRetArray = [];
-        const svgRetArray = [];
+        const svgFlowArray = [];
+        const svgExtraArray = [];
+        const svgArrowArray = [];
         const xLeft = 0;
-        const xRight = 100 - ARROW_HEAD_LENGTH;
+        const xRight = 100;
         let i = 0;
         const consumerRoutes = this._getGroupedConsumerRoutes();
         const count = Object.keys(consumerRoutes).length;
@@ -5520,20 +5534,34 @@ let ElecSankey = class ElecSankey extends s$1 {
         if (yRight < TEXT_PADDING) {
             yRight = TEXT_PADDING;
         }
-        let svgRow;
+        let svgFlow;
         let divRow;
+        let svgExtra;
+        let svgArrow;
         for (const key in consumerRoutes) {
             if (Object.prototype.hasOwnProperty.call(consumerRoutes, key)) {
-                [divRow, svgRow, yLeft, yRight] = this._renderConsumerFlow(xLeft, yLeft, xRight, yRight, consumerRoutes[key], color, svgScaleX, i++);
+                [divRow, svgFlow, svgExtra, svgArrow, yLeft, yRight] =
+                    this._renderConsumerFlow(xLeft, yLeft, xRight, yRight, consumerRoutes[key], color, svgScaleX, i++);
                 divRetArray.push(divRow);
-                svgRetArray.push(svgRow);
+                svgFlowArray.push(svgFlow);
+                svgExtraArray.push(svgExtra);
+                svgArrowArray.push(svgArrow);
                 yRight += gap;
             }
         }
-        [divRow, svgRow, yLeft, yRight] = this._renderConsumerFlow(xLeft, yLeft, xRight, yRight, this._untrackedConsumerRoute, color, svgScaleX, i++);
+        [divRow, svgFlow, svgExtra, svgArrow, yLeft, yRight] =
+            this._renderConsumerFlow(xLeft, yLeft, xRight, yRight, this._untrackedConsumerRoute, color, svgScaleX, i++);
         divRetArray.push(divRow);
-        svgRetArray.push(svgRow);
-        return [divRetArray, svgRetArray, yRight + CONSUMER_LABEL_HEIGHT / 2];
+        svgFlowArray.push(svgFlow);
+        svgExtraArray.push(svgExtra);
+        svgArrowArray.push(svgArrow);
+        return [
+            divRetArray,
+            svgFlowArray,
+            svgExtraArray,
+            svgArrowArray,
+            yRight + CONSUMER_LABEL_HEIGHT / 2,
+        ];
     }
     renderBatteriesInOutFlow(x1, x17, x14, x15, x21, y17, y18, svgScaleX) {
         // Bottom layer
@@ -5715,7 +5743,7 @@ let ElecSankey = class ElecSankey extends s$1 {
         const gridToConsumersFlowSvg = this.renderGridToConsumersFlow(x10, y2, y5, x1);
         const genToBattFlowSvg = this.renderGenerationToBatteriesFlow(x14, x15, y0, y17);
         const [genInFlowDiv, genInFlowSvg] = this.renderGenerationToConsumersFlow(x0, y0, x15, x16, x1, y1, y2, svgScaleX);
-        const [consOutFlowsDiv, consOutFlowsSvg, y8] = this._renderConsumerFlows(y1, y4, toConsumersBlendColor, svgScaleX);
+        const [consOutFlowsDiv, consOutFlowsSvg, consOutExtrasSvg, consOutArrowsSvg, y8,] = this._renderConsumerFlows(y1, y4, toConsumersBlendColor, svgScaleX);
         const gridToBattFlowSvg = this.renderGridToBatteriesFlow(x10, y5, y13, x17, y17, x14);
         const battToConsFlowSvg = this.renderBatteriesToConsumersFlow(x1, y5, y4, x20, x21, y17);
         const battToGridFlowSvg = this.renderBatteriesToGridFlow(x15, y17, x20, x11, y2, y11);
@@ -5724,6 +5752,7 @@ let ElecSankey = class ElecSankey extends s$1 {
         const battToConsBlendFlowSvg = this.renderBatteriesToConsumersBlendFlow(y5, y4, toConsumersBlendColor);
         const blendedFlowPreFanOut = this._renderBlendedFlowPreFanOut(y1, y4, toConsumersBlendColor);
         const ymax = Math.max(y4, y8, y22 + 30);
+        const arrowBoxWidth = ARROW_HEAD_LENGTH + this._getExtrasLength();
         return x `<div class="card-content">
       <div class="col1 container">
         <div class="col1top padding"></div>
@@ -5773,6 +5802,17 @@ let ElecSankey = class ElecSankey extends s$1 {
               ${consOutFlowsSvg}
             </svg>
           </div>
+          <div class="sankey-far-right">
+            <svg
+              viewBox="0 0 ${arrowBoxWidth} ${ymax}"
+              width="100%"
+              style="min-width: ${arrowBoxWidth}px"
+              height=${ymax * svgScaleX}
+              preserveAspectRatio="none"
+            >
+              ${consOutExtrasSvg} ${consOutArrowsSvg}
+            </svg>
+          </div>
         </div>
       </div>
       <div class="col3 container">
@@ -5781,151 +5821,161 @@ let ElecSankey = class ElecSankey extends s$1 {
       </div>
     </div>`;
     }
+    static get styles() {
+        return i$3 `
+      .card-content {
+        position: relative;
+        direction: ltr;
+        display: flex;
+      }
+      .col1 {
+        flex: 1;
+        min-width: 60px;
+        max-width: 120px;
+      }
+      .col1top {
+        height: 60px;
+      }
+      .col2 {
+        justify-content: left;
+        flex-grow: 1;
+      }
+      .col2top {
+        height: 60px;
+        display: flex;
+        justify-content: left;
+      }
+      .col2bottom {
+        display: flex;
+        justify-content: left;
+      }
+      .sankey-left {
+        flex: 1;
+        flex-grow: 0;
+      }
+      .sankey-mid {
+        flex: 1;
+        flex-grow: 1;
+        min-width: 20px;
+        position: relative;
+      }
+      .layer-wrapper {
+        position: relative;
+        width: 100%;
+        height: 100%;
+      }
+      .sankey-mid-labels {
+        width: 100%;
+        height: 100%;
+        position: absolute;
+      }
+      .sankey-mid-svg {
+        width: 100%;
+        height: 100%;
+        position: absolute;
+      }
+      .sankey-right {
+        flex: 1;
+        flex-grow: 2;
+        min-width: 40px;
+      }
+      .sankey-far-right {
+        flex: 1;
+        flex-grow: 0;
+        min-width: ${this.extrasLength + ARROW_HEAD_LENGTH}px;
+      }
+      .col3 {
+        flex: 1;
+        min-width: 80px;
+        max-width: 120px;
+        padding: 0px 16px 0px 0px;
+      }
+      .col3top {
+        height: 60px;
+      }
+      .label {
+        flex: 1;
+        position: relative;
+        font-size: 10px;
+      }
+      .elecroute-label-grid {
+        display: flex;
+        text-align: center;
+      }
+      .elecroute-label-battery {
+        display: flex;
+        min-width: 60px;
+        padding-left: 6px;
+      }
+      .elecroute-label-horiz {
+        display: flex;
+        flex: 0 0 auto;
+        flex-grow: 0;
+        flex-shrink: 0;
+        text-align: center;
+      }
+      .elecroute-label-consumer {
+        display: flex;
+        align-items: center;
+        text-align: left;
+        flex-grow: 0;
+        flex-shrink: 0;
+        justify-content: left;
+        padding-left: 6px;
+        white-space: pre;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      svg {
+        rect {
+          stroke: none;
+          stroke-width: 0;
+        }
+        path {
+          stroke: none;
+          stroke-width: 0;
+        }
+        path.grid {
+          fill: var(--grid-in-color, #920e83);
+        }
+        path.battery {
+          fill: var(--batt-in-color, #01f4fc);
+        }
+        polygon {
+          stroke: none;
+        }
+        polygon.generation {
+          fill: var(--generation-color, #0d6a04);
+        }
+        polygon.grid {
+          fill: var(--grid-in-color, #920e83);
+        }
+        polygon.tint {
+          fill: #000000;
+          opacity: 0.2;
+        }
+        path.generation {
+          fill: var(--generation-color, #0d6a04);
+          stroke: var(--generation-color, #0d6a04);
+          stroke-width: 0;
+        }
+        rect.generation {
+          fill: var(--generation-color, #0d6a04);
+          stroke-width: 0;
+        }
+        rect.grid {
+          fill: var(--grid-in-color, #920e83);
+        }
+        rect.battery {
+          fill: var(--batt-in-color, #01f4fc);
+        }
+      }
+    `;
+    }
 };
-ElecSankey.styles = i$3 `
-    .card-content {
-      position: relative;
-      direction: ltr;
-      display: flex;
-    }
-    .col1 {
-      flex: 1;
-      min-width: 60px;
-      max-width: 120px;
-    }
-    .col1top {
-      height: 60px;
-    }
-    .col2 {
-      justify-content: left;
-      flex-grow: 1;
-    }
-    .col2top {
-      height: 60px;
-      display: flex;
-      justify-content: left;
-    }
-    .col2bottom {
-      display: flex;
-      justify-content: left;
-    }
-    .sankey-left {
-      flex: 1;
-      flex-grow: 0;
-    }
-    .sankey-mid {
-      flex: 1;
-      flex-grow: 1;
-      min-width: 20px;
-      position: relative;
-    }
-    .layer-wrapper {
-      position: relative;
-      width: 100%;
-      height: 100%;
-    }
-    .sankey-mid-labels {
-      width: 100%;
-      height: 100%;
-      position: absolute;
-    }
-    .sankey-mid-svg {
-      width: 100%;
-      height: 100%;
-      position: absolute;
-    }
-    .sankey-right {
-      flex: 1;
-      flex-grow: 2;
-      min-width: 50px;
-    }
-    .col3 {
-      flex: 1;
-      min-width: 80px;
-      max-width: 120px;
-      padding: 0px 16px 0px 0px;
-    }
-    .col3top {
-      height: 60px;
-    }
-    .label {
-      flex: 1;
-      position: relative;
-      font-size: 10px;
-    }
-    .elecroute-label-grid {
-      display: flex;
-      text-align: center;
-    }
-    .elecroute-label-battery {
-      display: flex;
-      min-width: 60px;
-      padding-left: 6px;
-    }
-    .elecroute-label-horiz {
-      display: flex;
-      flex: 0 0 auto;
-      flex-grow: 0;
-      flex-shrink: 0;
-      text-align: center;
-    }
-    .elecroute-label-consumer {
-      display: flex;
-      align-items: center;
-      text-align: left;
-      flex-grow: 0;
-      flex-shrink: 0;
-      justify-content: left;
-      padding-left: 6px;
-      white-space: pre;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-    svg {
-      rect {
-        stroke: none;
-        stroke-width: 0;
-      }
-      path {
-        stroke: none;
-        stroke-width: 0;
-      }
-      path.grid {
-        fill: var(--grid-in-color, #920e83);
-      }
-      path.battery {
-        fill: var(--batt-in-color, #01f4fc);
-      }
-      polygon {
-        stroke: none;
-      }
-      polygon.generation {
-        fill: var(--generation-color, #0d6a04);
-      }
-      polygon.grid {
-        fill: var(--grid-in-color, #920e83);
-      }
-      polygon.tint {
-        fill: #000000;
-        opacity: 0.2;
-      }
-      path.generation {
-        fill: var(--generation-color, #0d6a04);
-        stroke: var(--generation-color, #0d6a04);
-        stroke-width: 0;
-      }
-      rect.generation {
-        fill: var(--generation-color, #0d6a04);
-        stroke-width: 0;
-      }
-      rect.grid {
-        fill: var(--grid-in-color, #920e83);
-      }
-      rect.battery {
-        fill: var(--batt-in-color, #01f4fc);
-      }
-    }
-  `;
+// Extras can be added in to the left of the consumer arrow by
+// extending this class and overriding extrasLength.
+ElecSankey.extrasLength = 0;
 __decorate([
     n$1()
 ], ElecSankey.prototype, "unit", void 0);
@@ -6067,47 +6117,49 @@ let HaElecSankey = class HaElecSankey extends ElecSankey {
             entityId: div.id,
         });
     }
+    static get styles() {
+        return [
+            super.styles,
+            i$3 `
+        ha-card:focus {
+          outline: none;
+        }
+        .card-header {
+          padding-bottom: 0;
+        }
+        .name {
+          text-align: center;
+          line-height: initial;
+          color: var(--primary-text-color);
+          width: 100%;
+          font-size: 15px;
+          margin-top: 8px;
+        }
+        .label {
+          font-size: 12px;
+        }
+        .label-action-clickable {
+          cursor: pointer;
+        }
+        ha-svg-icon {
+          --icon-primary-color: var(--icon-primary-color);
+        }
+        ha-svg-icon.small {
+          --mdc-icon-size: 12px;
+        }
+        .directionright.grid {
+          color: var(--energy-grid-consumption-color);
+        }
+        .directionleft.grid {
+          color: var(--energy-grid-return-color);
+        }
+        .directionleft.battery {
+          color: var(--energy-battery-out-color);
+        }
+      `,
+        ];
+    }
 };
-HaElecSankey.styles = [
-    ElecSankey.styles,
-    i$3 `
-      ha-card:focus {
-        outline: none;
-      }
-      .card-header {
-        padding-bottom: 0;
-      }
-      .name {
-        text-align: center;
-        line-height: initial;
-        color: var(--primary-text-color);
-        width: 100%;
-        font-size: 15px;
-        margin-top: 8px;
-      }
-      .label {
-        font-size: 12px;
-      }
-      .label-action-clickable {
-        cursor: pointer;
-      }
-      ha-svg-icon {
-        --icon-primary-color: var(--icon-primary-color);
-      }
-      ha-svg-icon.small {
-        --mdc-icon-size: 12px;
-      }
-      .directionright.grid {
-        color: var(--energy-grid-consumption-color);
-      }
-      .directionleft.grid {
-        color: var(--energy-grid-return-color);
-      }
-      .directionleft.battery {
-        color: var(--energy-battery-out-color);
-      }
-    `,
-];
 __decorate([
     n$1({ attribute: false })
 ], HaElecSankey.prototype, "hass", void 0);
