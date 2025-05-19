@@ -1,5 +1,6 @@
-  - sensor:
+- sensor:
       - name: "Goedkoopste Uur Vandaag"
+        unique_id: cheapest_hour_today
         icon: mdi:clock-time-eight-outline
         state: >
           {% set prices_today = [] %}
@@ -8,7 +9,7 @@
           
           {# Verzamel alle prijzen voor vandaag inclusief forecasts #}
           {% for h in range(current_hour + 1, 24) %}
-            {% if h - current_hour - 1 < 8 %}  # We hebben 8 forecast uren
+            {% if h - current_hour - 1 < 8 %}  {# We hebben 8 forecast uren #}
               {% set sensor_name = 'sensor.zonneplan_forecast_tariff_hour_' ~ (h - current_hour) %}
               {% if states(sensor_name) != 'unknown' and states(sensor_name)|float > 0 %}
                 {% set prices_today = prices_today + [(h, states(sensor_name)|float)] %}
@@ -26,6 +27,7 @@
           {% endif %}
           
       - name: "Goedkoopste 3 Uren Vandaag"
+        unique_id: cheapest_three_hours_today
         icon: mdi:clock-time-three-outline
         state: >
           {% set prices_today = [] %}
@@ -34,7 +36,7 @@
           
           {# Verzamel alle prijzen voor vandaag inclusief forecasts #}
           {% for h in range(current_hour + 1, 24) %}
-            {% if h - current_hour - 1 < 8 %}  
+            {% if h - current_hour - 1 < 8 %}  {# We hebben 8 forecast uren #}
               {% set sensor_name = 'sensor.zonneplan_forecast_tariff_hour_' ~ (h - current_hour) %}
               {% if states(sensor_name) != 'unknown' and states(sensor_name)|float > 0 %}
                 {% set prices_today = prices_today + [(h, states(sensor_name)|float)] %}
@@ -57,19 +59,66 @@
           {% endif %}
           
       - name: "Goedkoopste Uur Morgen"
+        unique_id: cheapest_hour_tomorrow
         icon: mdi:calendar-clock
         state: >
-          Geen data beschikbaar
+          {% set prices_tomorrow = [] %}
+          {% set has_tomorrow_data = false %}
+          
+          {# Controleer of we gegevens voor morgen hebben #}
+          {% for i in range(1, 17) %}
+            {% set sensor_name = 'sensor.zonneplan_forecast_tomorrow_hour_' ~ i %}
+            {% if states(sensor_name) != 'unknown' and states(sensor_name)|float > 0 %}
+              {% set prices_tomorrow = prices_tomorrow + [(i, states(sensor_name)|float)] %}
+              {% set has_tomorrow_data = true %}
+            {% endif %}
+          {% endfor %}
+          
+          {% if has_tomorrow_data and prices_tomorrow|length > 0 %}
+            {% set cheapest = prices_tomorrow|sort(attribute='1')|first %}
+            {% set hour = cheapest[0] %}
+            {% set price = cheapest[1]|round(4) %}
+            {{ "%02d:00 - %02d:00 (€%.4f)" | format(hour, hour+1, price) }}
+          {% else %}
+            Geen data beschikbaar
+          {% endif %}
           
       - name: "Goedkoopste 3 Uren Morgen"
+        unique_id: cheapest_three_hours_tomorrow
         icon: mdi:calendar-clock
         state: >
-          Geen data beschikbaar
+          {% set prices_tomorrow = [] %}
+          {% set has_tomorrow_data = false %}
+          
+          {# Controleer of we gegevens voor morgen hebben #}
+          {% for i in range(1, 17) %}
+            {% set sensor_name = 'sensor.zonneplan_forecast_tomorrow_hour_' ~ i %}
+            {% if states(sensor_name) != 'unknown' and states(sensor_name)|float > 0 %}
+              {% set prices_tomorrow = prices_tomorrow + [(i, states(sensor_name)|float)] %}
+              {% set has_tomorrow_data = true %}
+            {% endif %}
+          {% endfor %}
+          
+          {% if has_tomorrow_data and prices_tomorrow|length >= 3 %}
+            {% set cheapest = prices_tomorrow|sort(attribute='1')[:3] %}
+            {% set result = [] %}
+            {% for item in cheapest %}
+              {% set hour = item[0] %}
+              {% set price = item[1]|round(4) %}
+              {% set hour_str = "%02d:00 (€%.4f)" | format(hour, price) %}
+              {% set result = result + [hour_str] %}
+            {% endfor %}
+            {{ result|join(', ') }}
+          {% else %}
+            Geen data beschikbaar
+          {% endif %}
           
       - name: "Beste Tijd voor Batterij Laden"
+        unique_id: best_time_battery_charging
         icon: mdi:battery-charging
         state: >
           {% set prices_today = [] %}
+          {% set prices_tomorrow = [] %}
           {% set current_price = states('sensor.zonneplan_current_electricity_tariff')|float(0) %}
           {% set current_hour = now().hour %}
           
@@ -78,19 +127,31 @@
             {% if h - current_hour - 1 < 8 %}  {# We hebben 8 forecast uren #}
               {% set sensor_name = 'sensor.zonneplan_forecast_tariff_hour_' ~ (h - current_hour) %}
               {% if states(sensor_name) != 'unknown' and states(sensor_name)|float > 0 %}
-                {% set prices_today = prices_today + [(h, states(sensor_name)|float)] %}
+                {% set prices_today = prices_today + [(h, states(sensor_name)|float, 'vandaag')] %}
               {% endif %}
             {% endif %}
           {% endfor %}
           
-          {% if prices_today|length > 0 %}
+          {# Verzamel prijzen voor morgen als die beschikbaar zijn #}
+          {% for i in range(1, 17) %}
+            {% set sensor_name = 'sensor.zonneplan_forecast_tomorrow_hour_' ~ i %}
+            {% if states(sensor_name) != 'unknown' and states(sensor_name)|float > 0 %}
+              {% set prices_tomorrow = prices_tomorrow + [(i, states(sensor_name)|float, 'morgen')] %}
+            {% endif %}
+          {% endfor %}
+          
+          {# Combineer de prijzen #}
+          {% set all_prices = prices_today + prices_tomorrow %}
+          
+          {% if all_prices|length > 0 %}
             {% set low_threshold = states('sensor.low_price_threshold')|float(0.15) %}
-            {% set cheapest = prices_today|sort(attribute='1')|first %}
+            {% set cheapest = all_prices|sort(attribute='1')|first %}
             {% set hour = cheapest[0] %}
             {% set price = cheapest[1]|round(4) %}
+            {% set day = cheapest[2] %}
             
             {% if price < low_threshold %}
-              {{ "Vandaag %02d:00 - %02d:00 (€%.4f)" | format(hour, hour+1, price) }}
+              {{ "%s %02d:00 - %02d:00 (€%.4f)" | format(day, hour, hour+1, price) }}
             {% else %}
               Wacht op lagere prijzen
             {% endif %}

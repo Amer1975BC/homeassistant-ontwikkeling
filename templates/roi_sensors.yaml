@@ -1,19 +1,27 @@
-  - sensor:
+- sensor:
       # ROI (Return on Investment) sensoren voor zonnepanelen
       - name: "Zonnepanelen ROI Percentage"
+        unique_id: solar_roi_percentage
         unit_of_measurement: "%"
         state_class: measurement
         icon: mdi:percent
         state: >
           {% set investering = states('input_number.zonnepanelen_investering') | float(5000) %}
-          {% set besparing_per_jaar = states('sensor.besparing_zonnepanelen_vandaag') | float(0) * 365 %}
-          {% if investering > 0 %}
+          {% set besparing_per_dag = states('sensor.besparing_zonnepanelen_vandaag') | float(0) %}
+          {% set besparing_per_jaar = besparing_per_dag * 365 %}
+          {% if investering > 0 and besparing_per_jaar > 0 %}
             {{ ((besparing_per_jaar / investering) * 100) | round(1) }}
           {% else %}
             0
           {% endif %}
-
+        attributes:
+          investering: "{{ states('input_number.zonnepanelen_investering') | float(5000) }}"
+          jaarlijkse_besparing: >
+            {% set besparing_per_dag = states('sensor.besparing_zonnepanelen_vandaag') | float(0) %}
+            {{ (besparing_per_dag * 365) | round(2) }}
+          
       - name: "Zonnepanelen Totale Besparing"
+        unique_id: solar_total_savings
         unit_of_measurement: "EUR"
         state_class: total
         device_class: monetary
@@ -22,35 +30,57 @@
           {% set daily_saving = states('sensor.besparing_zonnepanelen_vandaag') | float(0) %}
           {% set days_since_install = states('input_number.zonnepanelen_dagen_in_gebruik') | float(365) %}
           {{ (daily_saving * days_since_install) | round(2) }}
-
+        attributes:
+          gemiddelde_dagelijkse_besparing: "{{ states('sensor.besparing_zonnepanelen_vandaag') | float(0) | round(2) }}"
+          dagen_in_gebruik: "{{ states('input_number.zonnepanelen_dagen_in_gebruik') | float(365) | round(0) }}"
+          
       - name: "Zonnepanelen Terugverdientijd Jaren"
+        unique_id: solar_payback_period
         unit_of_measurement: "jaar"
         state_class: measurement
         icon: mdi:calendar-clock
         state: >
           {% set investering = states('input_number.zonnepanelen_investering') | float(5000) %}
-          {% set besparing_per_jaar = states('sensor.besparing_zonnepanelen_vandaag') | float(0) * 365 %}
+          {% set besparing_per_dag = states('sensor.besparing_zonnepanelen_vandaag') | float(0) %}
+          {% set besparing_per_jaar = besparing_per_dag * 365 %}
           {% if besparing_per_jaar > 0 %}
             {{ (investering / besparing_per_jaar) | round(1) }}
           {% else %}
             0
           {% endif %}
-
+        attributes:
+          terugverdientijd_dagen: >
+            {% set investering = states('input_number.zonnepanelen_investering') | float(5000) %}
+            {% set besparing_per_dag = states('sensor.besparing_zonnepanelen_vandaag') | float(0) %}
+            {% if besparing_per_dag > 0 %}
+              {{ (investering / besparing_per_dag) | round(0) }}
+            {% else %}
+              0
+            {% endif %}
+            
       # ROI (Return on Investment) sensoren voor thuisbatterij
       - name: "Thuisbatterij ROI Percentage"
+        unique_id: battery_roi_percentage
         unit_of_measurement: "%"
         state_class: measurement
         icon: mdi:percent
         state: >
           {% set investering = states('input_number.thuisbatterij_investering') | float(3500) %}
-          {% set besparing_per_jaar = states('sensor.batterij_rendement_euro') | float(0) * 365 %}
-          {% if investering > 0 %}
+          {% set besparing_per_dag = states('sensor.batterij_rendement_euro') | float(0) %}
+          {% set besparing_per_jaar = besparing_per_dag * 365 %}
+          {% if investering > 0 and besparing_per_jaar > 0 %}
             {{ ((besparing_per_jaar / investering) * 100) | round(1) }}
           {% else %}
             0
           {% endif %}
-
+        attributes:
+          investering: "{{ states('input_number.thuisbatterij_investering') | float(3500) }}"
+          jaarlijkse_besparing: >
+            {% set besparing_per_dag = states('sensor.batterij_rendement_euro') | float(0) %}
+            {{ (besparing_per_dag * 365) | round(2) }}
+          
       - name: "Thuisbatterij Totale Besparing"
+        unique_id: battery_total_savings
         unit_of_measurement: "EUR"
         state_class: total
         device_class: monetary
@@ -59,40 +89,80 @@
           {% set daily_saving = states('sensor.batterij_rendement_euro') | float(0) %}
           {% set days_since_install = states('input_number.thuisbatterij_dagen_in_gebruik') | float(180) %}
           {{ (daily_saving * days_since_install) | round(2) }}
-
+        attributes:
+          gemiddelde_dagelijkse_besparing: "{{ states('sensor.batterij_rendement_euro') | float(0) | round(2) }}"
+          dagen_in_gebruik: "{{ states('input_number.thuisbatterij_dagen_in_gebruik') | float(180) | round(0) }}"
+          
       - name: "Thuisbatterij Terugverdientijd Jaren"
+        unique_id: battery_payback_period
         unit_of_measurement: "jaar"
         state_class: measurement
         icon: mdi:calendar-clock
         state: >
           {% set investering = states('input_number.thuisbatterij_investering') | float(3500) %}
-          {% set besparing_per_jaar = states('sensor.batterij_rendement_euro') | float(0) * 365 %}
+          {% set besparing_per_dag = states('sensor.batterij_rendement_euro') | float(0) %}
+          {% set besparing_per_jaar = besparing_per_dag * 365 %}
           {% if besparing_per_jaar > 0 %}
             {{ (investering / besparing_per_jaar) | round(1) }}
           {% else %}
             0
           {% endif %}
-
+        attributes:
+          terugverdientijd_dagen: >
+            {% set investering = states('input_number.thuisbatterij_investering') | float(3500) %}
+            {% set besparing_per_dag = states('sensor.batterij_rendement_euro') | float(0) %}
+            {% if besparing_per_dag > 0 %}
+              {{ (investering / besparing_per_dag) | round(0) }}
+            {% else %}
+              0
+            {% endif %}
+            
       # Totaal energiesysteem ROI
       - name: "Totale Energiesysteem ROI"
+        unique_id: total_energy_system_roi
         unit_of_measurement: "%"
         state_class: measurement
         icon: mdi:percent
         state: >
           {% set investering_zon = states('input_number.zonnepanelen_investering') | float(5000) %}
           {% set investering_batterij = states('input_number.thuisbatterij_investering') | float(3500) %}
-          {% set besparing_zon = states('sensor.besparing_zonnepanelen_vandaag') | float(0) * 365 %}
-          {% set besparing_batterij = states('sensor.batterij_rendement_euro') | float(0) * 365 %}
+          {% set besparing_zon_dag = states('sensor.besparing_zonnepanelen_vandaag') | float(0) %}
+          {% set besparing_batterij_dag = states('sensor.batterij_rendement_euro') | float(0) %}
+          {% set besparing_zon_jaar = besparing_zon_dag * 365 %}
+          {% set besparing_batterij_jaar = besparing_batterij_dag * 365 %}
           {% set totale_investering = investering_zon + investering_batterij %}
-          {% set totale_besparing = besparing_zon + besparing_batterij %}
-          {% if totale_investering > 0 %}
-            {{ ((totale_besparing / totale_investering) * 100) | round(1) }}
+          {% set totale_besparing_jaar = besparing_zon_jaar + besparing_batterij_jaar %}
+          {% if totale_investering > 0 and totale_besparing_jaar > 0 %}
+            {{ ((totale_besparing_jaar / totale_investering) * 100) | round(1) }}
           {% else %}
             0
           {% endif %}
-
+        attributes:
+          totale_investering: >
+            {% set investering_zon = states('input_number.zonnepanelen_investering') | float(5000) %}
+            {% set investering_batterij = states('input_number.thuisbatterij_investering') | float(3500) %}
+            {{ (investering_zon + investering_batterij) | round(0) }}
+          jaarlijkse_besparing: >
+            {% set besparing_zon_dag = states('sensor.besparing_zonnepanelen_vandaag') | float(0) %}
+            {% set besparing_batterij_dag = states('sensor.batterij_rendement_euro') | float(0) %}
+            {{ ((besparing_zon_dag + besparing_batterij_dag) * 365) | round(2) }}
+          terugverdientijd_jaren: >
+            {% set investering_zon = states('input_number.zonnepanelen_investering') | float(5000) %}
+            {% set investering_batterij = states('input_number.thuisbatterij_investering') | float(3500) %}
+            {% set besparing_zon_dag = states('sensor.besparing_zonnepanelen_vandaag') | float(0) %}
+            {% set besparing_batterij_dag = states('sensor.batterij_rendement_euro') | float(0) %}
+            {% set totale_investering = investering_zon + investering_batterij %}
+            {% set totale_besparing_dag = besparing_zon_dag + besparing_batterij_dag %}
+            {% set totale_besparing_jaar = totale_besparing_dag * 365 %}
+            {% if totale_besparing_jaar > 0 %}
+              {{ (totale_investering / totale_besparing_jaar) | round(1) }}
+            {% else %}
+              0
+            {% endif %}
+            
       # Maandelijkse energie kosten en besparingen
       - name: "Monthly Energy Cost Net"
+        unique_id: monthly_energy_cost_net
         unit_of_measurement: "EUR"
         state_class: total
         device_class: monetary
@@ -102,17 +172,50 @@
           {% set price = states('input_number.energieprijs_elektriciteit') | float(0.22) %}
           {% set gas_usage = states('sensor.monthly_gas_usage') | float(0) %}
           {% set gas_price = states('input_number.gasprijs') | float(0.85) %}
-          {% set cost = (consumption * price) + (gas_usage * gas_price) %}
-          {{ cost | round(2) }}
-
+          {% set electricity_cost = consumption * price %}
+          {% set gas_cost = gas_usage * gas_price %}
+          {{ (electricity_cost + gas_cost) | round(2) }}
+        attributes:
+          electricity_cost: >
+            {% set consumption = states('sensor.monthly_electricity_usage') | float(0) %}
+            {% set price = states('input_number.energieprijs_elektriciteit') | float(0.22) %}
+            {{ (consumption * price) | round(2) }}
+          gas_cost: >
+            {% set gas_usage = states('sensor.monthly_gas_usage') | float(0) %}
+            {% set gas_price = states('input_number.gasprijs') | float(0.85) %}
+            {{ (gas_usage * gas_price) | round(2) }}
+          electricity_price_per_unit: "{{ states('input_number.energieprijs_elektriciteit') | float(0.22) }}"
+          gas_price_per_unit: "{{ states('input_number.gasprijs') | float(0.85) }}"
+          
       - name: "Monthly Energy Savings"
+        unique_id: monthly_energy_savings
         unit_of_measurement: "EUR"
         state_class: total
         device_class: monetary
         icon: mdi:cash-plus
         state: >
           {% set production = states('sensor.monthly_solar_production') | float(0) %}
-          {% set consumption = states('sensor.monthly_electricity_usage') | float(0) %}
           {% set price = states('input_number.energieprijs_elektriciteit') | float(0.22) %}
           {% set savings = production * price %}
           {{ savings | round(2) }}
+        attributes:
+          solar_production_kwh: "{{ states('sensor.monthly_solar_production') | float(0) | round(1) }}"
+          electricity_price: "{{ states('input_number.energieprijs_elektriciteit') | float(0.22) }}"
+          savings_percentage: >
+            {% set production = states('sensor.monthly_solar_production') | float(0) %}
+            {% set consumption = states('sensor.monthly_electricity_usage') | float(0) %}
+            {% if consumption > 0 %}
+              {{ ((production / consumption) * 100) | round(1) }}
+            {% else %}
+              0
+            {% endif %}
+          daily_average_savings: >
+            {% set production = states('sensor.monthly_solar_production') | float(0) %}
+            {% set price = states('input_number.energieprijs_elektriciteit') | float(0.22) %}
+            {% set days_in_month = now().day %}
+            {% set savings = production * price %}
+            {% if days_in_month > 0 %}
+              {{ (savings / days_in_month) | round(2) }}
+            {% else %}
+              0
+            {% endif %}

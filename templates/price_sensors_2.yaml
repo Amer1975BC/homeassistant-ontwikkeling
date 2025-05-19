@@ -1,64 +1,73 @@
-  - sensor:
+- sensor:
       # Minimum en maximum prijzen morgen
       - name: "Stroomprijs Min Morgen"
+        unique_id: min_electricity_price_tomorrow
         unit_of_measurement: "EUR/kWh"
         state_class: total
         device_class: monetary
         icon: mdi:arrow-down-bold
         state: >
           {% set prices = state_attr('sensor.zonneplan_current_electricity_tariff', 'prices_tomorrow') %}
-          {% if prices and prices|length > 0 %}
-            {{ (prices | min) | round(3) }}
+          {% if prices is not none and prices is iterable and prices|length > 0 %}
+            {{ (prices | min) | round(4) }}
           {% else %}
             0
           {% endif %}
             
       - name: "Stroomprijs Max Morgen"
+        unique_id: max_electricity_price_tomorrow
         unit_of_measurement: "EUR/kWh"
         state_class: total
         device_class: monetary
         icon: mdi:arrow-up-bold
         state: >
           {% set prices = state_attr('sensor.zonneplan_current_electricity_tariff', 'prices_tomorrow') %}
-          {% if prices and prices|length > 0 %}
-            {{ (prices | max) | round(3) }}
+          {% if prices is not none and prices is iterable and prices|length > 0 %}
+            {{ (prices | max) | round(4) }}
           {% else %}
             0
           {% endif %}
             
       # Gemiddelde prijzen morgen
       - name: "Stroomprijs Gemiddeld Morgen"
+        unique_id: avg_electricity_price_tomorrow
         unit_of_measurement: "EUR/kWh"
         state_class: total
         device_class: monetary
         icon: mdi:chart-line
         state: >
           {% set prices = state_attr('sensor.zonneplan_current_electricity_tariff', 'prices_tomorrow') %}
-          {% if prices and prices|length > 0 %}
-            {{ (prices | sum / prices | length) | round(3) }}
+          {% if prices is not none and prices is iterable and prices|length > 0 %}
+            {{ (prices | sum / prices | length) | round(4) }}
           {% else %}
             0
           {% endif %}
           
       # Prijsvoorspelling voor volgende dag
       - name: "Prijsvoorspelling"
+        unique_id: price_prediction
         icon: mdi:chart-line
         state: >
           {% set prices_tomorrow = state_attr('sensor.zonneplan_current_electricity_tariff', 'prices_tomorrow') %}
-          {% if prices_tomorrow and prices_tomorrow|length > 0 %}
+          {% set prices_today = state_attr('sensor.zonneplan_current_electricity_tariff', 'prices_today') %}
+          
+          {% if prices_tomorrow is not none and prices_tomorrow is iterable and prices_tomorrow|length > 0 and 
+                prices_today is not none and prices_today is iterable and prices_today|length > 0 %}
+            
             {% set avg_tomorrow = prices_tomorrow|sum / prices_tomorrow|length %}
-            {% set avg_today = state_attr('sensor.zonneplan_current_electricity_tariff', 'prices_today')|sum / 
-                              state_attr('sensor.zonneplan_current_electricity_tariff', 'prices_today')|length %}
+            {% set avg_today = prices_today|sum / prices_today|length %}
+            {% set change_pct = ((avg_tomorrow - avg_today) / avg_today * 100)|round %}
+            
             {% if avg_tomorrow < avg_today * 0.9 %}
-              Duidelijk lager
+              Duidelijk lager ({{ change_pct }}%)
             {% elif avg_tomorrow < avg_today %}
-              Iets lager
+              Iets lager ({{ change_pct }}%)
             {% elif avg_tomorrow < avg_today * 1.1 %}
-              Ongeveer gelijk
+              Ongeveer gelijk ({{ change_pct }}%)
             {% elif avg_tomorrow < avg_today * 1.25 %}
-              Iets hoger
+              Iets hoger (+{{ change_pct }}%)
             {% else %}
-              Duidelijk hoger
+              Duidelijk hoger (+{{ change_pct }}%)
             {% endif %}
           {% else %}
             Onbekend
@@ -67,20 +76,75 @@
           prijsgegevens: >
             {% set prices_today = state_attr('sensor.zonneplan_current_electricity_tariff', 'prices_today') %}
             {% set prices_tomorrow = state_attr('sensor.zonneplan_current_electricity_tariff', 'prices_tomorrow') %}
-            {% if prices_today and prices_tomorrow %}
+            
+            {% if prices_today is not none and prices_today is iterable and prices_today|length > 0 and 
+                  prices_tomorrow is not none and prices_tomorrow is iterable and prices_tomorrow|length > 0 %}
+              
               {% set avg_today = prices_today|sum / prices_today|length %}
               {% set avg_tomorrow = prices_tomorrow|sum / prices_tomorrow|length %}
-              {% set change_pct = ((avg_tomorrow - avg_today) / avg_today * 100)|round %}
+              {% set change_pct = ((avg_tomorrow - avg_today) / avg_today * 100)|round(1) %}
               
               {
-                "avg_today": {{ avg_today|round(3) }},
-                "avg_tomorrow": {{ avg_tomorrow|round(3) }},
+                "avg_today": {{ avg_today|round(4) }},
+                "avg_tomorrow": {{ avg_tomorrow|round(4) }},
                 "change_percentage": {{ change_pct }},
-                "min_today": {{ prices_today|min|round(3) }},
-                "max_today": {{ prices_today|max|round(3) }},
-                "min_tomorrow": {{ prices_tomorrow|min|round(3) }},
-                "max_tomorrow": {{ prices_tomorrow|max|round(3) }}
+                "min_today": {{ prices_today|min|round(4) }},
+                "max_today": {{ prices_today|max|round(4) }},
+                "min_tomorrow": {{ prices_tomorrow|min|round(4) }},
+                "max_tomorrow": {{ prices_tomorrow|max|round(4) }}
               }
             {% else %}
-              {}
+              {
+                "avg_today": 0,
+                "avg_tomorrow": 0,
+                "change_percentage": 0,
+                "min_today": 0,
+                "max_today": 0,
+                "min_tomorrow": 0,
+                "max_tomorrow": 0
+              }
+            {% endif %}
+          gunstige_uren: >
+            {% set prices_tomorrow = state_attr('sensor.zonneplan_current_electricity_tariff', 'prices_tomorrow') %}
+            {% if prices_tomorrow is not none and prices_tomorrow is iterable and prices_tomorrow|length > 0 %}
+              {% set avg_price = prices_tomorrow|sum / prices_tomorrow|length %}
+              {% set threshold = avg_price * 0.85 %}
+              {% set cheap_hours = [] %}
+              
+              {% for hour in range(0, prices_tomorrow|length) %}
+                {% if prices_tomorrow[hour] < threshold %}
+                  {% set cheap_hours = cheap_hours + [hour] %}
+                {% endif %}
+              {% endfor %}
+              
+              {% if cheap_hours|length > 0 %}
+                {% set hour_blocks = [] %}
+                {% set current_block = [cheap_hours[0]] %}
+                
+                {% for i in range(1, cheap_hours|length) %}
+                  {% if cheap_hours[i] == cheap_hours[i-1] + 1 %}
+                    {% set current_block = current_block + [cheap_hours[i]] %}
+                  {% else %}
+                    {% set hour_blocks = hour_blocks + [current_block] %}
+                    {% set current_block = [cheap_hours[i]] %}
+                  {% endif %}
+                {% endfor %}
+                
+                {% set hour_blocks = hour_blocks + [current_block] %}
+                {% set result = [] %}
+                
+                {% for block in hour_blocks %}
+                  {% if block|length == 1 %}
+                    {% set result = result + ["%02d:00" | format(block[0])] %}
+                  {% else %}
+                    {% set result = result + ["%02d:00-%02d:00" | format(block[0], block[-1] + 1)] %}
+                  {% endif %}
+                {% endfor %}
+                
+                {{ result|join(", ") }}
+              {% else %}
+                "Geen gunstige uren gevonden"
+              {% endif %}
+            {% else %}
+              "Geen prijsdata beschikbaar"
             {% endif %}

@@ -1,71 +1,106 @@
-  - sensor:
-      - name: "Stroomprijzen Morgen Data"
+- sensor:
+      # Minimum en maximum prijzen morgen
+      - name: "Stroomprijs Min Morgen"
+        unique_id: min_electricity_price_tomorrow
+        unit_of_measurement: "EUR/kWh"
+        state_class: total
+        device_class: monetary
+        icon: mdi:arrow-down-bold
         state: >
-          {% if states('sensor.zonneplan_forecast_tariff_hour_1') != 'unknown' %}
-            {{ states('sensor.zonneplan_forecast_tariff_hour_1')|float(0) }}
+          {% set prices = state_attr('sensor.zonneplan_current_electricity_tariff', 'prices_tomorrow') %}
+          {% if prices is not none and prices is iterable and prices|length > 0 %}
+            {{ (prices | min) | round(4) }}
           {% else %}
             0
           {% endif %}
-        unit_of_measurement: "€/kWh"
-        icon: mdi:currency-eur
-        attributes:
-          hours: >
-            {% set tomorrow = (now() + timedelta(days=1)).strftime('%Y-%m-%d') %}
-            {% set hours = [] %}
             
-            {% for h in range(24) %}
-              {% set hour_str = '%02d:00:00' | format(h) %}
-              {% set timestamp = tomorrow ~ ' ' ~ hour_str %}
-              {% set hours = hours + [timestamp] %}
-            {% endfor %}
+      - name: "Stroomprijs Max Morgen"
+        unique_id: max_electricity_price_tomorrow
+        unit_of_measurement: "EUR/kWh"
+        state_class: total
+        device_class: monetary
+        icon: mdi:arrow-up-bold
+        state: >
+          {% set prices = state_attr('sensor.zonneplan_current_electricity_tariff', 'prices_tomorrow') %}
+          {% if prices is not none and prices is iterable and prices|length > 0 %}
+            {{ (prices | max) | round(4) }}
+          {% else %}
+            0
+          {% endif %}
             
-            {{ hours }}
+      # Gemiddelde prijzen morgen
+      - name: "Stroomprijs Gemiddeld Morgen"
+        unique_id: avg_electricity_price_tomorrow
+        unit_of_measurement: "EUR/kWh"
+        state_class: total
+        device_class: monetary
+        icon: mdi:chart-line
+        state: >
+          {% set prices = state_attr('sensor.zonneplan_current_electricity_tariff', 'prices_tomorrow') %}
+          {% if prices is not none and prices is iterable and prices|length > 0 %}
+            {{ (prices | sum / prices | length) | round(4) }}
+          {% else %}
+            0
+          {% endif %}
           
-          prices: >
-            {% set tomorrow_prices = [] %}
-            {% set avg_price = 0 %}
+      # Prijsvoorspelling voor volgende dag
+      - name: "Prijsvoorspelling"
+        unique_id: price_prediction
+        icon: mdi:chart-line
+        state: >
+          {% set prices_tomorrow = state_attr('sensor.zonneplan_current_electricity_tariff', 'prices_tomorrow') %}
+          {% set prices_today = state_attr('sensor.zonneplan_current_electricity_tariff', 'prices_today') %}
+          
+          {% if prices_tomorrow is not none and prices_tomorrow is iterable and prices_tomorrow|length > 0 and 
+                prices_today is not none and prices_today is iterable and prices_today|length > 0 %}
             
-            {# We hebben mogelijk geen prijzen voor morgen, gebruik dan een inschatting #}
-            {% set forecast_sensors = [
-              'sensor.zonneplan_forecast_tariff_hour_1',
-              'sensor.zonneplan_forecast_tariff_hour_2',
-              'sensor.zonneplan_forecast_tariff_hour_3',
-              'sensor.zonneplan_forecast_tariff_hour_4',
-              'sensor.zonneplan_forecast_tariff_hour_5',
-              'sensor.zonneplan_forecast_tariff_hour_6',
-              'sensor.zonneplan_forecast_tariff_hour_7',
-              'sensor.zonneplan_forecast_tariff_hour_8'
-            ] %}
+            {% set avg_tomorrow = prices_tomorrow|sum / prices_tomorrow|length %}
+            {% set avg_today = prices_today|sum / prices_today|length %}
+            {% set change_pct = ((avg_tomorrow - avg_today) / avg_today * 100)|round %}
             
-            {# Bereken gemiddelde van bekende prijzen #}
-            {% set sum = 0 %}
-            {% set count = 0 %}
-            {% for sensor in forecast_sensors %}
-              {% if states(sensor) != 'unknown' %}
-                {% set sum = sum + states(sensor)|float(0) %}
-                {% set count = count + 1 %}
-              {% endif %}
-            {% endfor %}
-            
-            {% if count > 0 %}
-              {% set avg_price = sum / count %}
+            {% if avg_tomorrow < avg_today * 0.9 %}
+              Duidelijk lager ({{ change_pct }}%)
+            {% elif avg_tomorrow < avg_today %}
+              Iets lager ({{ change_pct }}%)
+            {% elif avg_tomorrow < avg_today * 1.1 %}
+              Ongeveer gelijk ({{ change_pct }}%)
+            {% elif avg_tomorrow < avg_today * 1.25 %}
+              Iets hoger (+{{ change_pct }}%)
             {% else %}
-              {% set avg_price = states('sensor.zonneplan_current_electricity_tariff')|float(0) %}
+              Duidelijk hoger (+{{ change_pct }}%)
             {% endif %}
+          {% else %}
+            Onbekend
+          {% endif %}
+        attributes:
+          prijsgegevens: >
+            {% set prices_today = state_attr('sensor.zonneplan_current_electricity_tariff', 'prices_today') %}
+            {% set prices_tomorrow = state_attr('sensor.zonneplan_current_electricity_tariff', 'prices_tomorrow') %}
             
-            {# Vul in met geschatte prijzen #}
-            {% for h in range(24) %}
-              {# Simuleer een dagpatroon met lagere prijzen 's nachts #}
-              {% if h < 6 or h >= 22 %}
-                {% set price_factor = 0.8 %}  # 20% lager 's nachts
-              {% elif h >= 16 and h < 22 %}
-                {% set price_factor = 1.2 %}  # 20% hoger in de avond
-              {% else %}
-                {% set price_factor = 1.0 %}  # Normaal overdag
-              {% endif %}
+            {% if prices_today is not none and prices_today is iterable and prices_today|length > 0 and 
+                  prices_tomorrow is not none and prices_tomorrow is iterable and prices_tomorrow|length > 0 %}
               
-              {% set estimated_price = avg_price * price_factor %}
-              {% set tomorrow_prices = tomorrow_prices + [estimated_price|round(4)] %}
-            {% endfor %}
-            
-            {{ tomorrow_prices }}
+              {% set avg_today = prices_today|sum / prices_today|length %}
+              {% set avg_tomorrow = prices_tomorrow|sum / prices_tomorrow|length %}
+              {% set change_pct = ((avg_tomorrow - avg_today) / avg_today * 100)|round(1) %}
+              
+              {
+                "avg_today": {{ avg_today|round(4) }},
+                "avg_tomorrow": {{ avg_tomorrow|round(4) }},
+                "change_percentage": {{ change_pct }},
+                "min_today": {{ prices_today|min|round(4) }},
+                "max_today": {{ prices_today|max|round(4) }},
+                "min_tomorrow": {{ prices_tomorrow|min|round(4) }},
+                "max_tomorrow": {{ prices_tomorrow|max|round(4) }}
+              }
+            {% else %}
+              {
+                "avg_today": 0,
+                "avg_tomorrow": 0,
+                "change_percentage": 0,
+                "min_today": 0,
+                "max_today": 0,
+                "min_tomorrow": 0,
+                "max_tomorrow": 0
+              }
+            {% endif %}

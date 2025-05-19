@@ -2,39 +2,105 @@
     - name: "Gemiddeld Verbruik Ochtend Berekend"
       unique_id: gemiddeld_verbruik_ochtend_calc
       unit_of_measurement: "kWh"
-      state_class: measurement
+      state_class: total
       device_class: energy
       icon: mdi:weather-sunny
       state: >
         {% set daily_consumption = states('sensor.zonneplan_electricity_consumption_today') | float(0) %}
         {{ (daily_consumption * 0.25) | round(2) }}
+      attributes:
+        periode: "06:00 - 12:00"
+        percentage_van_dagelijks: 25
+        hourly_consumption: >
+          {% set daily_consumption = states('sensor.zonneplan_electricity_consumption_today') | float(0) %}
+          {% set total_for_period = daily_consumption * 0.25 %}
+          {% set hours_in_period = 6 %}
+          {{ (total_for_period / hours_in_period) | round(3) }}
       
     - name: "Gemiddeld Verbruik Middag Berekend"
       unique_id: gemiddeld_verbruik_middag_calc
       unit_of_measurement: "kWh"
-      state_class: measurement
+      state_class: total
       device_class: energy
       icon: mdi:weather-partly-cloudy
       state: >
         {% set daily_consumption = states('sensor.zonneplan_electricity_consumption_today') | float(0) %}
         {{ (daily_consumption * 0.30) | round(2) }}
+      attributes:
+        periode: "12:00 - 18:00"
+        percentage_van_dagelijks: 30
+        hourly_consumption: >
+          {% set daily_consumption = states('sensor.zonneplan_electricity_consumption_today') | float(0) %}
+          {% set total_for_period = daily_consumption * 0.30 %}
+          {% set hours_in_period = 6 %}
+          {{ (total_for_period / hours_in_period) | round(3) }}
       
     - name: "Gemiddeld Verbruik Avond Berekend"
       unique_id: gemiddeld_verbruik_avond_calc
       unit_of_measurement: "kWh"
-      state_class: measurement
+      state_class: total
       device_class: energy
       icon: mdi:weather-sunset
       state: >
         {% set daily_consumption = states('sensor.zonneplan_electricity_consumption_today') | float(0) %}
         {{ (daily_consumption * 0.35) | round(2) }}
+      attributes:
+        periode: "18:00 - 00:00"
+        percentage_van_dagelijks: 35
+        hourly_consumption: >
+          {% set daily_consumption = states('sensor.zonneplan_electricity_consumption_today') | float(0) %}
+          {% set total_for_period = daily_consumption * 0.35 %}
+          {% set hours_in_period = 6 %}
+          {{ (total_for_period / hours_in_period) | round(3) }}
       
     - name: "Gemiddeld Verbruik Nacht Berekend"
       unique_id: gemiddeld_verbruik_nacht_calc
       unit_of_measurement: "kWh"
-      state_class: measurement
+      state_class: total
       device_class: energy
       icon: mdi:weather-night
       state: >
         {% set daily_consumption = states('sensor.zonneplan_electricity_consumption_today') | float(0) %}
         {{ (daily_consumption * 0.10) | round(2) }}
+      attributes:
+        periode: "00:00 - 06:00"
+        percentage_van_dagelijks: 10
+        hourly_consumption: >
+          {% set daily_consumption = states('sensor.zonneplan_electricity_consumption_today') | float(0) %}
+          {% set total_for_period = daily_consumption * 0.10 %}
+          {% set hours_in_period = 6 %}
+          {{ (total_for_period / hours_in_period) | round(3) }}
+          
+    - name: "Dagelijks Verbruik per Uur"
+      unique_id: daily_consumption_per_hour
+      unit_of_measurement: "kWh"
+      state_class: total
+      device_class: energy
+      icon: mdi:clock-outline
+      state: >
+        {% set daily_consumption = states('sensor.zonneplan_electricity_consumption_today') | float(0) %}
+        {{ (daily_consumption / 24) | round(3) }}
+      attributes:
+        huidige_periode: >
+          {% set hour_now = now().hour %}
+          {% if hour_now >= 0 and hour_now < 6 %}
+            nacht
+          {% elif hour_now >= 6 and hour_now < 12 %}
+            ochtend
+          {% elif hour_now >= 12 and hour_now < 18 %}
+            middag
+          {% else %}
+            avond
+          {% endif %}
+        current_period_total: >
+          {% set daily_consumption = states('sensor.zonneplan_electricity_consumption_today') | float(0) %}
+          {% set hour_now = now().hour %}
+          {% if hour_now >= 0 and hour_now < 6 %}
+            {{ (daily_consumption * 0.10) | round(2) }}
+          {% elif hour_now >= 6 and hour_now < 12 %}
+            {{ (daily_consumption * 0.25) | round(2) }}
+          {% elif hour_now >= 12 and hour_now < 18 %}
+            {{ (daily_consumption * 0.30) | round(2) }}
+          {% else %}
+            {{ (daily_consumption * 0.35) | round(2) }}
+          {% endif %}

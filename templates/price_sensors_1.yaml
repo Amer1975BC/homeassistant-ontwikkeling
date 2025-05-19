@@ -1,6 +1,7 @@
-  - sensor:
+- sensor:
       # Prijssensoren voor dashboard
       - name: "Dynamische Energie Prijs"
+        unique_id: dynamic_energy_price
         unit_of_measurement: "EUR/kWh"
         state_class: total
         device_class: monetary
@@ -13,6 +14,7 @@
           {% endif %}
       
       - name: "Huidige Gas Prijs"
+        unique_id: current_gas_price
         unit_of_measurement: "EUR/m³"
         state_class: total
         device_class: monetary
@@ -25,6 +27,7 @@
           {% endif %}
             
       - name: "Stroomprijs Huidig"
+        unique_id: current_electricity_price
         unit_of_measurement: "EUR/kWh"
         state_class: total
         device_class: monetary
@@ -37,6 +40,7 @@
           {% endif %}
       
       - name: "Stroomprijs Min Vandaag"
+        unique_id: min_electricity_price_today
         unit_of_measurement: "EUR/kWh"
         state_class: total
         device_class: monetary
@@ -49,6 +53,7 @@
           {% endif %}
       
       - name: "Stroomprijs Max Vandaag"
+        unique_id: max_electricity_price_today
         unit_of_measurement: "EUR/kWh"
         state_class: total
         device_class: monetary
@@ -61,6 +66,7 @@
           {% endif %}
       
       - name: "Stroomprijs Gemiddeld Vandaag"
+        unique_id: avg_electricity_price_today
         unit_of_measurement: "EUR/kWh"
         state_class: total
         device_class: monetary
@@ -73,6 +79,7 @@
           {% endif %}
       
       - name: "Zonneplan All In Prijs"
+        unique_id: zonneplan_all_in_price
         unit_of_measurement: "EUR/kWh"
         state_class: total
         device_class: monetary
@@ -86,8 +93,7 @@
             
       # Indicator sensoren
       - name: "Laag Tarief Indicator"
-        unit_of_measurement: ""
-        state_class: measurement
+        unique_id: low_tariff_indicator
         icon: mdi:arrow-down-bold
         state: >
           {% set current_price = states('sensor.stroomprijs_huidig')|float(0.30) %}
@@ -97,10 +103,18 @@
           {% else %}
             0
           {% endif %}
+        attributes:
+          percentage_below_average: >
+            {% set current_price = states('sensor.stroomprijs_huidig')|float(0.30) %}
+            {% set avg_price = states('sensor.stroomprijs_gemiddeld_vandaag')|float(0.30) %}
+            {% if avg_price > 0 %}
+              {{ ((1 - (current_price / avg_price)) * 100)|round(1) }}
+            {% else %}
+              0
+            {% endif %}
       
       - name: "Hoog Tarief Indicator"
-        unit_of_measurement: ""
-        state_class: measurement
+        unique_id: high_tariff_indicator
         icon: mdi:arrow-up-bold
         state: >
           {% set current_price = states('sensor.stroomprijs_huidig')|float(0.30) %}
@@ -110,3 +124,12 @@
           {% else %}
             0
           {% endif %}
+        attributes:
+          percentage_above_average: >
+            {% set current_price = states('sensor.stroomprijs_huidig')|float(0.30) %}
+            {% set avg_price = states('sensor.stroomprijs_gemiddeld_vandaag')|float(0.30) %}
+            {% if avg_price > 0 %}
+              {{ (((current_price / avg_price) - 1) * 100)|round(1) }}
+            {% else %}
+              0
+            {% endif %}
