@@ -1,4 +1,5 @@
-- sensor:
+template:
+  - sensor:
       - name: "Goedkoopste Uur Vandaag"
         unique_id: cheapest_hour_today
         icon: mdi:clock-time-three-outline
@@ -51,6 +52,115 @@
           {% set hours = state_attr('sensor.zonneplan_current_electricity_tariff', 'hours_priced_today') %}
           {% if prices is not none and prices is iterable and prices|length >= 3 and 
                 hours is not none and hours is iterable and hours|length == prices|length %}
-            {% set min_avg = 999 %}
-            {% set best_start = 0 %}
-            {% for i in range(prices|length -
+            {% set price_hour_pairs = [] %}
+            {% for i in range(prices|length) %}
+              {% set price_hour_pairs = price_hour_pairs + [(prices[i], hours[i])] %}
+            {% endfor %}
+            
+            {% set sorted_pairs = price_hour_pairs|sort %}
+            {% set cheapest_three = sorted_pairs[:3] %}
+            
+            {% set result = [] %}
+            {% for pair in cheapest_three %}
+              {% set price = pair[0] %}
+              {% set hour = pair[1][11:13]|int(0) %}
+              {% set hour_str = "%02d:00 (€%.4f)" | format(hour, price) %}
+              {% set result = result + [hour_str] %}
+            {% endfor %}
+            
+            {{ result|join(', ') }}
+          {% else %}
+            Geen data beschikbaar
+          {% endif %}
+        attributes:
+          top_three_prices: >
+            {% set prices = state_attr('sensor.zonneplan_current_electricity_tariff', 'prices_today') %}
+            {% if prices is not none and prices is iterable and prices|length >= 3 %}
+              {% set sorted_prices = prices|sort %}
+              [{{ sorted_prices[0]|round(4) }}, {{ sorted_prices[1]|round(4) }}, {{ sorted_prices[2]|round(4) }}]
+            {% else %}
+              []
+            {% endif %}
+          
+      - name: "Goedkoopste Uur Morgen"
+        unique_id: cheapest_hour_tomorrow
+        icon: mdi:clock-time-three-outline
+        state: >
+          {% set prices = state_attr('sensor.zonneplan_current_electricity_tariff', 'prices_tomorrow') %}
+          {% set hours = state_attr('sensor.zonneplan_current_electricity_tariff', 'hours_priced_tomorrow') %}
+          {% if prices is not none and prices is iterable and prices|length > 0 and 
+                hours is not none and hours is iterable and hours|length == prices|length %}
+            {% set min_price = prices | min %}
+            {% set min_index = prices.index(min_price) %}
+            {% if min_index < hours|length and hours[min_index] %}
+              {% set hour = hours[min_index][11:13] | int(0) %}
+              {{ hour }}:00 - {{ (hour + 1) }}:00 (€{{ min_price | round(4) }}/kWh)
+            {% else %}
+              Onbekend
+            {% endif %}
+          {% else %}
+            Geen data beschikbaar
+          {% endif %}
+        attributes:
+          cheapest_price: >
+            {% set prices = state_attr('sensor.zonneplan_current_electricity_tariff', 'prices_tomorrow') %}
+            {% if prices is not none and prices is iterable and prices|length > 0 %}
+              {{ prices | min | round(4) }}
+            {% else %}
+              0
+            {% endif %}
+          cheapest_hour: >
+            {% set prices = state_attr('sensor.zonneplan_current_electricity_tariff', 'prices_tomorrow') %}
+            {% set hours = state_attr('sensor.zonneplan_current_electricity_tariff', 'hours_priced_tomorrow') %}
+            {% if prices is not none and prices is iterable and prices|length > 0 and 
+                  hours is not none and hours is iterable and hours|length == prices|length %}
+              {% set min_price = prices | min %}
+              {% set min_index = prices.index(min_price) %}
+              {% if min_index < hours|length and hours[min_index] %}
+                {% set hour = hours[min_index][11:13] | int(0) %}
+                {{ hour }}
+              {% else %}
+                0
+              {% endif %}
+            {% else %}
+              0
+            {% endif %}
+          
+      - name: "Goedkoopste 3 Uren Morgen"
+        unique_id: cheapest_three_hours_tomorrow
+        icon: mdi:clock-time-three-outline
+        state: >
+          {% set prices = state_attr('sensor.zonneplan_current_electricity_tariff', 'prices_tomorrow') %}
+          {% set hours = state_attr('sensor.zonneplan_current_electricity_tariff', 'hours_priced_tomorrow') %}
+          {% if prices is not none and prices is iterable and prices|length >= 3 and 
+                hours is not none and hours is iterable and hours|length == prices|length %}
+            {% set price_hour_pairs = [] %}
+            {% for i in range(prices|length) %}
+              {% set price_hour_pairs = price_hour_pairs + [(prices[i], hours[i])] %}
+            {% endfor %}
+            
+            {% set sorted_pairs = price_hour_pairs|sort %}
+            {% set cheapest_three = sorted_pairs[:3] %}
+            
+            {% set result = [] %}
+            {% for pair in cheapest_three %}
+              {% set price = pair[0] %}
+              {% set hour = pair[1][11:13]|int(0) %}
+              {% set hour_str = "%02d:00 (€%.4f)" | format(hour, price) %}
+              {% set result = result + [hour_str] %}
+            {% endfor %}
+            
+            {{ result|join(', ') }}
+          {% else %}
+            Geen data beschikbaar
+          {% endif %}
+        attributes:
+          top_three_prices: >
+            {% set prices = state_attr('sensor.zonneplan_current_electricity_tariff', 'prices_tomorrow') %}
+            {% if prices is not none and prices is iterable and prices|length >= 3 %}
+              {% set sorted_prices = prices|sort %}
+              [{{ sorted_prices[0]|round(4) }}, {{ sorted_prices[1]|round(4) }}, {{ sorted_prices[2]|round(4) }}]
+            {% else %}
+              []
+            {% endif %}
+            

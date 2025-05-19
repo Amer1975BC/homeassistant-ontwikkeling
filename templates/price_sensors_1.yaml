@@ -1,68 +1,51 @@
-- sensor:
-      # Prijssensoren voor dashboard
-      - name: "Dynamische Energie Prijs"
-        unique_id: dynamic_energy_price
-        unit_of_measurement: "EUR/kWh"
-        state_class: total
-        device_class: monetary
-        icon: mdi:currency-eur
-        state: >
-          {% if states('sensor.entsoe_average_electricity_price_today') != 'unknown' and states('sensor.entsoe_average_electricity_price_today') != 'unavailable' %}
-            {{ states('sensor.entsoe_average_electricity_price_today')|float(0)|round(4) }}
-          {% else %}
-            0.25
-          {% endif %}
-      
-      - name: "Huidige Gas Prijs"
-        unique_id: current_gas_price
-        unit_of_measurement: "EUR/m³"
-        state_class: total
-        device_class: monetary
-        icon: mdi:currency-eur
-        state: >
-          {% if states('sensor.zonneplan_current_gas_tariff') != 'unknown' and states('sensor.zonneplan_current_gas_tariff') != 'unavailable' %}
-            {{ states('sensor.zonneplan_current_gas_tariff')|float(0)|round(3) }}
-          {% else %}
-            0.85
-          {% endif %}
-            
-      - name: "Stroomprijs Huidig"
-        unique_id: current_electricity_price
-        unit_of_measurement: "EUR/kWh"
-        state_class: total
-        device_class: monetary
-        icon: mdi:flash-circle
-        state: >
-          {% if states('sensor.entsoe_current_hour_price') != 'unknown' and states('sensor.entsoe_current_hour_price') != 'unavailable' %}
-            {{ states('sensor.entsoe_current_hour_price')|float(0)|round(4) }}
-          {% else %}
-            0.30
-          {% endif %}
-      
+template:
+  - sensor:
       - name: "Stroomprijs Min Vandaag"
         unique_id: min_electricity_price_today
         unit_of_measurement: "EUR/kWh"
         state_class: total
         device_class: monetary
-        icon: mdi:flash-circle
+        icon: mdi:arrow-down-bold
         state: >
-          {% if states('sensor.entsoe_min_price_today') != 'unknown' and states('sensor.entsoe_min_price_today') != 'unavailable' %}
-            {{ states('sensor.entsoe_min_price_today')|float(0)|round(4) }}
+          {% set prices = [] %}
+          {% set current_price = states('sensor.zonneplan_current_electricity_tariff')|float(0) %}
+          {% set prices = prices + [current_price] %}
+          
+          {% for i in range(1, 9) %}
+            {% set sensor_name = 'sensor.zonneplan_forecast_tariff_hour_' ~ i %}
+            {% if states(sensor_name) != 'unknown' and states(sensor_name) != 'unavailable' %}
+              {% set prices = prices + [states(sensor_name)|float(0)] %}
+            {% endif %}
+          {% endfor %}
+          
+          {% if prices|length > 0 %}
+            {{ prices|min|round(4) }}
           {% else %}
-            0.20
+            0
           {% endif %}
-      
+            
       - name: "Stroomprijs Max Vandaag"
         unique_id: max_electricity_price_today
         unit_of_measurement: "EUR/kWh"
         state_class: total
         device_class: monetary
-        icon: mdi:flash-circle
+        icon: mdi:arrow-up-bold
         state: >
-          {% if states('sensor.entsoe_max_price_today') != 'unknown' and states('sensor.entsoe_max_price_today') != 'unavailable' %}
-            {{ states('sensor.entsoe_max_price_today')|float(0)|round(4) }}
+          {% set prices = [] %}
+          {% set current_price = states('sensor.zonneplan_current_electricity_tariff')|float(0) %}
+          {% set prices = prices + [current_price] %}
+          
+          {% for i in range(1, 9) %}
+            {% set sensor_name = 'sensor.zonneplan_forecast_tariff_hour_' ~ i %}
+            {% if states(sensor_name) != 'unknown' and states(sensor_name) != 'unavailable' %}
+              {% set prices = prices + [states(sensor_name)|float(0)] %}
+            {% endif %}
+          {% endfor %}
+          
+          {% if prices|length > 0 %}
+            {{ prices|max|round(4) }}
           {% else %}
-            0.40
+            0
           {% endif %}
       
       - name: "Stroomprijs Gemiddeld Vandaag"
@@ -70,66 +53,82 @@
         unit_of_measurement: "EUR/kWh"
         state_class: total
         device_class: monetary
-        icon: mdi:flash-circle
+        icon: mdi:chart-line
         state: >
-          {% if states('sensor.entsoe_average_price_today') != 'unknown' and states('sensor.entsoe_average_price_today') != 'unavailable' %}
-            {{ states('sensor.entsoe_average_price_today')|float(0)|round(4) }}
-          {% else %}
-            0.30
-          {% endif %}
-      
-      - name: "Zonneplan All In Prijs"
-        unique_id: zonneplan_all_in_price
-        unit_of_measurement: "EUR/kWh"
-        state_class: total
-        device_class: monetary
-        icon: mdi:cash
-        state: >
-          {% if states('sensor.zonneplan_current_electricity_tariff') != 'unknown' and states('sensor.zonneplan_current_electricity_tariff') != 'unavailable' %}
-            {{ states('sensor.zonneplan_current_electricity_tariff')|float(0)|round(4) }}
-          {% else %}
-            0.30
-          {% endif %}
-            
-      # Indicator sensoren
-      - name: "Laag Tarief Indicator"
-        unique_id: low_tariff_indicator
-        icon: mdi:arrow-down-bold
-        state: >
-          {% set current_price = states('sensor.stroomprijs_huidig')|float(0.30) %}
-          {% set avg_price = states('sensor.stroomprijs_gemiddeld_vandaag')|float(0.30) %}
-          {% if current_price < avg_price * 0.85 %}
-            1
-          {% else %}
-            0
-          {% endif %}
-        attributes:
-          percentage_below_average: >
-            {% set current_price = states('sensor.stroomprijs_huidig')|float(0.30) %}
-            {% set avg_price = states('sensor.stroomprijs_gemiddeld_vandaag')|float(0.30) %}
-            {% if avg_price > 0 %}
-              {{ ((1 - (current_price / avg_price)) * 100)|round(1) }}
-            {% else %}
-              0
+          {% set prices = [] %}
+          {% set current_price = states('sensor.zonneplan_current_electricity_tariff')|float(0) %}
+          {% set prices = prices + [current_price] %}
+          
+          {% for i in range(1, 9) %}
+            {% set sensor_name = 'sensor.zonneplan_forecast_tariff_hour_' ~ i %}
+            {% if states(sensor_name) != 'unknown' and states(sensor_name) != 'unavailable' %}
+              {% set prices = prices + [states(sensor_name)|float(0)] %}
             {% endif %}
-      
-      - name: "Hoog Tarief Indicator"
-        unique_id: high_tariff_indicator
-        icon: mdi:arrow-up-bold
-        state: >
-          {% set current_price = states('sensor.stroomprijs_huidig')|float(0.30) %}
-          {% set avg_price = states('sensor.stroomprijs_gemiddeld_vandaag')|float(0.30) %}
-          {% if current_price > avg_price * 1.15 %}
-            1
+          {% endfor %}
+          
+          {% if prices|length > 0 %}
+            {{ (prices|sum / prices|length)|round(4) }}
           {% else %}
             0
           {% endif %}
+          
+      - name: "Stroomprijs Histogram"
+        unique_id: stroomprijs_histogram
+        icon: mdi:chart-histogram
+        state: >
+          {% set prices = [] %}
+          {% set current_price = states('sensor.zonneplan_current_electricity_tariff')|float(0) %}
+          {% set prices = prices + [current_price] %}
+          
+          {% for i in range(1, 9) %}
+            {% set sensor_name = 'sensor.zonneplan_forecast_tariff_hour_' ~ i %}
+            {% if states(sensor_name) != 'unknown' and states(sensor_name) != 'unavailable' %}
+              {% set prices = prices + [states(sensor_name)|float(0)] %}
+            {% endif %}
+          {% endfor %}
+          
+          {{ prices|length }}
         attributes:
-          percentage_above_average: >
-            {% set current_price = states('sensor.stroomprijs_huidig')|float(0.30) %}
-            {% set avg_price = states('sensor.stroomprijs_gemiddeld_vandaag')|float(0.30) %}
-            {% if avg_price > 0 %}
-              {{ (((current_price / avg_price) - 1) * 100)|round(1) }}
+          histogramdata: >
+            {% set prices = [] %}
+            {% set current_price = states('sensor.zonneplan_current_electricity_tariff')|float(0) %}
+            {% set prices = prices + [current_price] %}
+            
+            {% for i in range(1, 9) %}
+              {% set sensor_name = 'sensor.zonneplan_forecast_tariff_hour_' ~ i %}
+              {% if states(sensor_name) != 'unknown' and states(sensor_name) != 'unavailable' %}
+                {% set prices = prices + [states(sensor_name)|float(0)] %}
+              {% endif %}
+            {% endfor %}
+            
+            {% if prices|length > 0 %}
+              {% set zeer_laag_count = 0 %}
+              {% set laag_count = 0 %}
+              {% set gemiddeld_count = 0 %}
+              {% set hoog_count = 0 %}
+              {% set zeer_hoog_count = 0 %}
+              
+              {% for price in prices %}
+                {% if 0 <= price < 0.15 %}
+                  {% set zeer_laag_count = zeer_laag_count + 1 %}
+                {% elif 0.15 <= price < 0.20 %}
+                  {% set laag_count = laag_count + 1 %}
+                {% elif 0.20 <= price < 0.25 %}
+                  {% set gemiddeld_count = gemiddeld_count + 1 %}
+                {% elif 0.25 <= price < 0.30 %}
+                  {% set hoog_count = hoog_count + 1 %}
+                {% elif price >= 0.30 %}
+                  {% set zeer_hoog_count = zeer_hoog_count + 1 %}
+                {% endif %}
+              {% endfor %}
+              
+              [
+                {"name": "Zeer Laag", "count": {{ zeer_laag_count }}, "percentage": {{ ((zeer_laag_count / prices|length * 100)|round)|int }}},
+                {"name": "Laag", "count": {{ laag_count }}, "percentage": {{ ((laag_count / prices|length * 100)|round)|int }}},
+                {"name": "Gemiddeld", "count": {{ gemiddeld_count }}, "percentage": {{ ((gemiddeld_count / prices|length * 100)|round)|int }}},
+                {"name": "Hoog", "count": {{ hoog_count }}, "percentage": {{ ((hoog_count / prices|length * 100)|round)|int }}},
+                {"name": "Zeer Hoog", "count": {{ zeer_hoog_count }}, "percentage": {{ ((zeer_hoog_count / prices|length * 100)|round)|int }}}
+              ]
             {% else %}
-              0
+              []
             {% endif %}

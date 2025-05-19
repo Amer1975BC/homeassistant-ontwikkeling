@@ -1,5 +1,5 @@
-- sensor:
-      # Maandelijkse elektriciteitsstatistieken
+template:
+  - sensor:
       - name: "Monthly Electricity Usage"
         unique_id: monthly_electricity_usage
         unit_of_measurement: "kWh"
@@ -7,12 +7,10 @@
         device_class: energy
         icon: mdi:flash
         state: >
-          {% set stats = state_attr('sensor.zonneplan_electricity_consumption_today', 'monthly_stats') %}
-          {% if stats and now().month > 0 and now().month <= stats|length %}
-            {{ stats[now().month - 1] | float(0) | round(2) }}
-          {% else %}
-            {{ states('sensor.zonneplan_electricity_consumption_today') | float(0) | round(2) }}
-          {% endif %}
+          {% set current_day = now().day %}
+          {% set daily_consumption = states('sensor.zonneplan_electricity_consumption_today')|float(0) %}
+          {% set estimated_monthly = daily_consumption * 30.5 %}
+          {{ estimated_monthly | round(2) }}
           
       - name: "Monthly Solar Production"
         unique_id: monthly_solar_production
@@ -21,12 +19,13 @@
         device_class: energy
         icon: mdi:solar-power
         state: >
-          {% set production = namespace(value=0) %}
-          {% set solaredge = states('sensor.solaredge_energieopbrengst_maand') | float(0) %}
-          {% set envoy = states('sensor.envoy_122309090641_energy_production_month') | float(0) %}
-          {% set growatt = states('sensor.amer_growatt_total_energy_month') | float(0) %}
-          {% set production.value = solaredge + envoy + growatt %}
-          {{ production.value | round(2) }}
+          {% set solar_today = states('sensor.solar_production_today')|float(0) %}
+          {% if solar_today > 0 %}
+            {% set estimated_monthly = solar_today * 30.5 %}
+            {{ estimated_monthly | round(2) }}
+          {% else %}
+            0
+          {% endif %}
           
       - name: "Monthly Grid Import"
         unique_id: monthly_grid_import
@@ -35,40 +34,10 @@
         device_class: energy
         icon: mdi:transmission-tower-import
         state: >
-          {{ states('sensor.zonneplan_electricity_consumption_month') | float(0) | round(2) }}
-          
-      # Maandelijkse gasstatistieken
-      - name: "Monthly Gas Usage"
-        unique_id: monthly_gas_usage
-        unit_of_measurement: "m³"
-        state_class: total
-        device_class: gas
-        icon: mdi:fire
-        state: >
-          {{ states('sensor.zonneplan_gas_consumption_month') | float(0) | round(2) }}
-          
-      - name: "Monthly Degree Days"
-        unique_id: monthly_degree_days
-        unit_of_measurement: "°C⋅day"
-        state_class: measurement
-        icon: mdi:thermometer
-        state: >
-          {% set avg_temp = states('sensor.buiten_temperature') | float(0) %}
-          {% set base_temp = 18 %}
-          {% set days_in_month = now().day %}
-          {% if avg_temp < base_temp %}
-            {{ ((base_temp - avg_temp) * days_in_month) | round(1) }}
+          {% set import_today = states('sensor.grid_import_today')|float(0) %}
+          {% if import_today > 0 %}
+            {% set estimated_monthly = import_today * 30.5 %}
+            {{ estimated_monthly | round(2) }}
           {% else %}
-            0
+            {{ states('sensor.zonneplan_electricity_consumption_today')|float(0) * 30.5 | round(2) }}
           {% endif %}
-          
-      # Maandelijkse waterstatistieken
-      - name: "Monthly Water Usage"
-        unique_id: monthly_water_usage
-        unit_of_measurement: "m³"
-        state_class: total
-        device_class: water
-        icon: mdi:water
-        state: >
-          {% set water_usage = states('input_number.water_meter') | float(0) %}
-          {{ water_usage | round(2) }}

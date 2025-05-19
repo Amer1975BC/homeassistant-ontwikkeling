@@ -1,0 +1,126 @@
+  - sensor:
+      - name: "Diagnostische Info"
+        unique_id: diagnostic_info
+        state: "{{ now().strftime('%Y-%m-%d %H:%M:%S') }}"
+        attributes:
+          # Algemene sensor statuscontrole
+          zonneplan_current_electricity_tariff: "{{ states('sensor.zonneplan_current_electricity_tariff') }}"
+          zonneplan_current_gas_tariff: "{{ states('sensor.zonneplan_current_gas_tariff') }}"
+          zonneplan_electricity_consumption_today: "{{ states('sensor.zonneplan_electricity_consumption_today') }}"
+          zonneplan_electricity_consumption_yesterday: "{{ states('sensor.zonneplan_electricity_consumption_yesterday') }}"
+          zonneplan_electricity_consumption_month: "{{ states('sensor.zonneplan_electricity_consumption_month') }}"
+          zonneplan_gas_consumption_month: "{{ states('sensor.zonneplan_gas_consumption_month') }}"
+          
+          # Zonnepanelen sensoren
+          solar_production_today: "{{ states('sensor.sensor_totale_pv_energie_vandaag') }}"
+          solar_production_yesterday: "{{ states('sensor.sensor_totale_pv_energie_gisteren') }}"
+          solaredge_month: "{{ states('sensor.solaredge_energieopbrengst_maand') }}"
+          envoy_month: "{{ states('sensor.envoy_122309090641_energy_production_month') }}"
+          growatt_month: "{{ states('sensor.amer_growatt_total_energy_month') }}"
+          
+          # Waterverbruik en weer
+          water_meter: "{{ states('input_number.water_meter') }}"
+          buiten_temperature: "{{ states('sensor.buiten_temperature') }}"
+          sunshine_hours_today: "{{ states('sensor.sunshine_hours_today') }}"
+          
+          # Connect energiemeter
+          connect_energiemeter: "{{ states('sensor.connect_energiemeter_electricity_consumption') }}"
+          connect_energiemeter_daily: "{{ states('sensor.connect_energiemeter_electricity_consumption_daily') }}"
+          
+          # Thuisbatterij sensoren
+          thuisbatterij_today: "{{ states('sensor.thuisbatterij_today') }}"
+          thuisbatterij_delivery_today: "{{ states('sensor.thuisbatterij_delivery_today') }}"
+          batterij_rendement_euro: "{{ states('sensor.batterij_rendement_euro') }}"
+          
+          # Forecast sensoren
+          forecast_hour_1: "{{ states('sensor.zonneplan_forecast_tariff_hour_1') }}"
+          forecast_hour_2: "{{ states('sensor.zonneplan_forecast_tariff_hour_2') }}"
+          forecast_hour_3: "{{ states('sensor.zonneplan_forecast_tariff_hour_3') }}"
+          forecast_hour_4: "{{ states('sensor.zonneplan_forecast_tariff_hour_4') }}"
+          forecast_hour_5: "{{ states('sensor.zonneplan_forecast_tariff_hour_5') }}"
+          forecast_hour_6: "{{ states('sensor.zonneplan_forecast_tariff_hour_6') }}"
+          forecast_hour_7: "{{ states('sensor.zonneplan_forecast_tariff_hour_7') }}"
+          forecast_hour_8: "{{ states('sensor.zonneplan_forecast_tariff_hour_8') }}"
+          
+          forecast_tomorrow_hour_1: "{{ states('sensor.zonneplan_forecast_tomorrow_hour_1') }}"
+          forecast_tomorrow_hour_8: "{{ states('sensor.zonneplan_forecast_tomorrow_hour_8') }}"
+          forecast_tomorrow_hour_16: "{{ states('sensor.zonneplan_forecast_tomorrow_hour_16') }}"
+          
+          # Attributen controle
+          prices_today_attr: "{{ state_attr('sensor.zonneplan_current_electricity_tariff', 'prices_today') }}"
+          prices_tomorrow_attr: "{{ state_attr('sensor.zonneplan_current_electricity_tariff', 'prices_tomorrow') }}"
+          hours_priced_today_attr: "{{ state_attr('sensor.zonneplan_current_electricity_tariff', 'hours_priced_today') }}"
+          hours_priced_tomorrow_attr: "{{ state_attr('sensor.zonneplan_current_electricity_tariff', 'hours_priced_tomorrow') }}"
+          hourly_stats_attr: "{{ state_attr('sensor.connect_energiemeter_electricity_consumption', 'hourly_stats') }}"
+          monthly_stats_attr: "{{ state_attr('sensor.zonneplan_electricity_consumption_today', 'monthly_stats') }}"
+          weekly_data_attr: "{{ state_attr('sensor.zonneplan_electricity_consumption_today', 'weekly_data') }}"
+          
+  - trigger:
+      - platform: time_pattern
+        hours: "/1"
+      - platform: homeassistant
+        event: start
+    sensor:
+      - name: "Diagnostische Info Text Dump"
+        unique_id: diagnostic_info_text_dump
+        state: "{{ now().strftime('%Y-%m-%d %H:%M:%S') }}"
+        attributes:
+          text_dump: >
+            DIAGNOSTISCHE INFORMATIE DUMP
+            =============================
+            Timestamp: {{ now().strftime('%Y-%m-%d %H:%M:%S') }}
+            
+            ELEKTRICITEIT BRONNEN
+            ---------------------
+            zonneplan_current_electricity_tariff: {{ states('sensor.zonneplan_current_electricity_tariff') }}
+            zonneplan_electricity_consumption_today: {{ states('sensor.zonneplan_electricity_consumption_today') }}
+            zonneplan_electricity_consumption_yesterday: {{ states('sensor.zonneplan_electricity_consumption_yesterday') }}
+            zonneplan_electricity_consumption_month: {{ states('sensor.zonneplan_electricity_consumption_month') }}
+            
+            ZONNEPANELEN BRONNEN
+            -------------------
+            sensor_totale_pv_energie_vandaag: {{ states('sensor.sensor_totale_pv_energie_vandaag') }}
+            sensor_totale_pv_energie_gisteren: {{ states('sensor.sensor_totale_pv_energie_gisteren') }}
+            solaredge_energieopbrengst_maand: {{ states('sensor.solaredge_energieopbrengst_maand') }}
+            envoy_energy_production_month: {{ states('sensor.envoy_122309090641_energy_production_month') }}
+            amer_growatt_total_energy_month: {{ states('sensor.amer_growatt_total_energy_month') }}
+            
+            GAS & WATER BRONNEN
+            -----------------
+            zonneplan_current_gas_tariff: {{ states('sensor.zonneplan_current_gas_tariff') }}
+            zonneplan_gas_consumption_month: {{ states('sensor.zonneplan_gas_consumption_month') }}
+            input_number.water_meter: {{ states('input_number.water_meter') }}
+            
+            FORECASTS & WEER
+            --------------
+            zonneplan_forecast_tariff_hour_1: {{ states('sensor.zonneplan_forecast_tariff_hour_1') }}
+            zonneplan_forecast_tomorrow_hour_1: {{ states('sensor.zonneplan_forecast_tomorrow_hour_1') }}
+            buiten_temperature: {{ states('sensor.buiten_temperature') }}
+            sunshine_hours_today: {{ states('sensor.sunshine_hours_today') }}
+            
+            BATTERIJ INFORMATIE
+            -----------------
+            thuisbatterij_today: {{ states('sensor.thuisbatterij_today') }}
+            thuisbatterij_delivery_today: {{ states('sensor.thuisbatterij_delivery_today') }}
+            batterij_rendement_euro: {{ states('sensor.batterij_rendement_euro') }}
+            
+            ATTRIBUTEN CONTROLE
+            -----------------
+            prices_today attribuut aanwezig: {% if state_attr('sensor.zonneplan_current_electricity_tariff', 'prices_today') is not none %}Ja{% else %}Nee{% endif %}
+            prices_tomorrow attribuut aanwezig: {% if state_attr('sensor.zonneplan_current_electricity_tariff', 'prices_tomorrow') is not none %}Ja{% else %}Nee{% endif %}
+            hours_priced_today attribuut aanwezig: {% if state_attr('sensor.zonneplan_current_electricity_tariff', 'hours_priced_today') is not none %}Ja{% else %}Nee{% endif %}
+            hours_priced_tomorrow attribuut aanwezig: {% if state_attr('sensor.zonneplan_current_electricity_tariff', 'hours_priced_tomorrow') is not none %}Ja{% else %}Nee{% endif %}
+            hourly_stats attribuut aanwezig: {% if state_attr('sensor.connect_energiemeter_electricity_consumption', 'hourly_stats') is not none %}Ja{% else %}Nee{% endif %}
+            monthly_stats attribuut aanwezig: {% if state_attr('sensor.zonneplan_electricity_consumption_today', 'monthly_stats') is not none %}Ja{% else %}Nee{% endif %}
+            weekly_data attribuut aanwezig: {% if state_attr('sensor.zonneplan_electricity_consumption_today', 'weekly_data') is not none %}Ja{% else %}Nee{% endif %}
+            
+            ATTRIBUUT DETAILS
+            ---------------
+            prices_today lengte: {% set attr = state_attr('sensor.zonneplan_current_electricity_tariff', 'prices_today') %}{% if attr is not none and attr is iterable %}{{ attr|length }}{% else %}Niet beschikbaar{% endif %}
+            prices_tomorrow lengte: {% set attr = state_attr('sensor.zonneplan_current_electricity_tariff', 'prices_tomorrow') %}{% if attr is not none and attr is iterable %}{{ attr|length }}{% else %}Niet beschikbaar{% endif %}
+            hourly_stats aantal sleutels: {% set attr = state_attr('sensor.connect_energiemeter_electricity_consumption', 'hourly_stats') %}{% if attr is not none and attr is mapping %}{{ attr.keys()|list|length }}{% else %}Niet beschikbaar{% endif %}
+            
+            EERSTE PRIJS VALUES (INDIEN BESCHIKBAAR)
+            ---------------------------------------
+            Eerste prijs vandaag: {% set attr = state_attr('sensor.zonneplan_current_electricity_tariff', 'prices_today') %}{% if attr is not none and attr is iterable and attr|length > 0 %}{{ attr[0] }}{% else %}Niet beschikbaar{% endif %}
+            Eerste prijs morgen: {% set attr = state_attr('sensor.zonneplan_current_electricity_tariff', 'prices_tomorrow') %}{% if attr is not none and attr is iterable and attr|length > 0 %}{{ attr[0] }}{% else %}Niet beschikbaar{% endif %}
