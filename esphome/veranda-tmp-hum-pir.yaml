@@ -41,7 +41,7 @@ web_server:
 sensor:
   - platform: dht
     pin: GPIO4
-    model: DHT11
+    model: DHT22
     temperature:
       name: "Temperatuur Veranda"
     humidity:
