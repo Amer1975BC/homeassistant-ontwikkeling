@@ -1,4 +1,3 @@
-template:
   - sensor:
       - name: "Stroomprijs Min Vandaag"
         unique_id: min_electricity_price_today

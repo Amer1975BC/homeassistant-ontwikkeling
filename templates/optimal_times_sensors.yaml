@@ -1,4 +1,3 @@
-template:
   - sensor:
       - name: "Goedkoopste Uur Vandaag"
         unique_id: cheapest_hour_today

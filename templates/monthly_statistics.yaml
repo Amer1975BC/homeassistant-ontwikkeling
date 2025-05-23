@@ -1,4 +1,3 @@
-template:
   - sensor:
       - name: "Monthly Electricity Usage"
         unique_id: monthly_electricity_usage
