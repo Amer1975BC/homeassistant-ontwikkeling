@@ -1,140 +1,191 @@
-sensor:
-  - name: "Goedkoopste Uur Vandaag"
-    unique_id: goedkoopste_uur_vandaag_v3
-    icon: mdi:clock-time-three-outline
-    state: >
-      {% set forecast = state_attr('sensor.zonneplan_current_electricity_tariff', 'forecast') %}
-      {% if forecast and forecast|length > 0 %}
-        {% set today = now().date().isoformat() %}
-        {% set today_items = forecast | selectattr('datetime', 'match', today + 'T.*') | list %}
-        
-        {% if today_items|length > 0 %}
-          {% set min_item = today_items | min(attribute='electricity_price') %}
-          {% set hour = min_item.datetime[11:13] | int %}
-          {% set price = (min_item.electricity_price | float) / 1000000 %}
-          {{ hour }}:00 - {{ hour + 1 }}:00 (€{{ "%.4f"|format(price) }}/kWh)
-        {% else %}
-          Geen data voor vandaag
-        {% endif %}
-      {% else %}
-        Geen forecast data
-      {% endif %}
-    attributes:
-      cheapest_price: >
+- sensor:
+    - name: "Goedkoopste Uur Vandaag (v3)"
+      unique_id: goedkoopste_uur_vandaag_v3_clean
+      icon: mdi:clock-time-three-outline
+      state: >
         {% set forecast = state_attr('sensor.zonneplan_current_electricity_tariff', 'forecast') %}
         {% if forecast and forecast|length > 0 %}
           {% set today = now().date().isoformat() %}
           {% set today_items = forecast | selectattr('datetime', 'match', today + 'T.*') | list %}
-          {% if today_items|length > 0 %}
-            {% set min_price = (today_items | min(attribute='electricity_price')).electricity_price %}
-            {{ (min_price | float) / 1000000 | round(4) }}
-          {% else %}
-            null
-          {% endif %}
-        {% else %}
-          null
-        {% endif %}
-      cheapest_hour: >
-        {% set forecast = state_attr('sensor.zonneplan_current_electricity_tariff', 'forecast') %}
-        {% if forecast and forecast|length > 0 %}
-          {% set today = now().date().isoformat() %}
-          {% set today_items = forecast | selectattr('datetime', 'match', today + 'T.*') | list %}
+          
           {% if today_items|length > 0 %}
             {% set min_item = today_items | min(attribute='electricity_price') %}
-            {{ min_item.datetime[11:13] | int }}
+            {% set hour = min_item.datetime[11:13] | int %}
+            {% set price = (min_item.electricity_price | float) / 1000000 %}
+            {{ hour }}:00 - {{ hour + 1 }}:00 (€{{ "%.4f"|format(price) }}/kWh)
+          {% else %}
+            Geen data voor vandaag
+          {% endif %}
+        {% else %}
+          Geen forecast data
+        {% endif %}
+      attributes:
+        cheapest_price: >
+          {% set forecast = state_attr('sensor.zonneplan_current_electricity_tariff', 'forecast') %}
+          {% if forecast and forecast|length > 0 %}
+            {% set today = now().date().isoformat() %}
+            {% set today_items = forecast | selectattr('datetime', 'match', today + 'T.*') | list %}
+            {% if today_items|length > 0 %}
+              {% set min_price = (today_items | min(attribute='electricity_price')).electricity_price %}
+              {{ (min_price | float) / 1000000 | round(4) }}
+            {% else %}
+              null
+            {% endif %}
           {% else %}
             null
           {% endif %}
-        {% else %}
-          null
-        {% endif %}
-
-  - name: "Goedkoopste 3 Uren Vandaag"
-    unique_id: goedkoopste_3_uren_vandaag_v3
-    icon: mdi:clock-time-three-outline
-    state: >
-      {% set forecast = state_attr('sensor.zonneplan_current_electricity_tariff', 'forecast') %}
-      {% if forecast and forecast|length > 0 %}
-        {% set today = now().date().isoformat() %}
-        {% set today_items = forecast | selectattr('datetime', 'match', today + 'T.*') | list %}
-        
-        {% if today_items|length >= 3 %}
-          {% set sorted_items = today_items | sort(attribute='electricity_price') %}
-          {% set cheapest_three = sorted_items[:3] %}
-          
-          {% set result = [] %}
-          {% for item in cheapest_three %}
-            {% set hour = item.datetime[11:13] | int %}
-            {% set price = (item.electricity_price | float) / 1000000 %}
-            {% set hour_str = "%02d:00 (€%.4f)" | format(hour, price) %}
-            {% set result = result + [hour_str] %}
-          {% endfor %}
-          
-          {{ result | join(', ') }}
-        {% else %}
-          Onvoldoende data voor vandaag
-        {% endif %}
-      {% else %}
-        Geen forecast data
-      {% endif %}
-
-  - name: "Goedkoopste Uur Morgen"
-    unique_id: goedkoopste_uur_morgen_v3
-    icon: mdi:clock-time-three-outline
-    state: >
-      {% set forecast = state_attr('sensor.zonneplan_current_electricity_tariff', 'forecast') %}
-      {% if forecast and forecast|length > 0 %}
-        {% set tomorrow = (now().date() + timedelta(days=1)).isoformat() %}
-        {% set tomorrow_items = forecast | selectattr('datetime', 'match', tomorrow + 'T.*') | list %}
-        
-        {% if tomorrow_items|length > 0 %}
-          {% set min_item = tomorrow_items | min(attribute='electricity_price') %}
-          {% set hour = min_item.datetime[11:13] | int %}
-          {% set price = (min_item.electricity_price | float) / 1000000 %}
-          {{ hour }}:00 - {{ hour + 1 }}:00 (€{{ "%.4f"|format(price) }}/kWh)
-        {% else %}
-          Geen data voor morgen
-        {% endif %}
-      {% else %}
-        Geen forecast data
-      {% endif %}
-
-  - name: "Goedkoopste 3 Uren Morgen"
-    unique_id: goedkoopste_3_uren_morgen_v3
-    icon: mdi:clock-time-three-outline
-    state: >
-      {% set forecast = state_attr('sensor.zonneplan_current_electricity_tariff', 'forecast') %}
-      {% if forecast and forecast|length > 0 %}
-        {% set tomorrow = (now().date() + timedelta(days=1)).isoformat() %}
-        {% set tomorrow_items = forecast | selectattr('datetime', 'match', tomorrow + 'T.*') | list %}
-        
-        {% if tomorrow_items|length >= 3 %}
-          {% set sorted_items = tomorrow_items | sort(attribute='electricity_price') %}
-          {% set cheapest_three = sorted_items[:3] %}
-          
-          {% set result = [] %}
-          {% for item in cheapest_three %}
-            {% set hour = item.datetime[11:13] | int %}
-            {% set price = (item.electricity_price | float) / 1000000 %}
-            {% set hour_str = "%02d:00 (€%.4f)" | format(hour, price) %}
-            {% set result = result + [hour_str] %}
-          {% endfor %}
-          
-          {{ result | join(', ') }}
-        {% else %}
-          Onvoldoende data voor morgen
-        {% endif %}
-      {% else %}
-        Geen forecast data
-      {% endif %}
-
-      - name: "Zonneplan Test"
-        unique_id: zonneplan_test_v1
-        icon: mdi:test-tube
-        state: >
+        cheapest_hour: >
           {% set forecast = state_attr('sensor.zonneplan_current_electricity_tariff', 'forecast') %}
-          {% if forecast %}
-            {{ forecast | length }} forecast items
+          {% if forecast and forecast|length > 0 %}
+            {% set today = now().date().isoformat() %}
+            {% set today_items = forecast | selectattr('datetime', 'match', today + 'T.*') | list %}
+            {% if today_items|length > 0 %}
+              {% set min_item = today_items | min(attribute='electricity_price') %}
+              {{ min_item.datetime[11:13] | int }}
+            {% else %}
+              null
+            {% endif %}
           {% else %}
-            Geen forecast
+            null
           {% endif %}
+
+    - name: "Goedkoopste 3 Uren Vandaag (v3)"
+      unique_id: goedkoopste_3_uren_vandaag_v3_clean
+      icon: mdi:clock-time-three-outline
+      state: >
+        {% set forecast = state_attr('sensor.zonneplan_current_electricity_tariff', 'forecast') %}
+        {% if forecast and forecast|length > 0 %}
+          {% set today = now().date().isoformat() %}
+          {% set today_items = forecast | selectattr('datetime', 'match', today + 'T.*') | list %}
+          
+          {% if today_items|length >= 3 %}
+            {% set sorted_items = today_items | sort(attribute='electricity_price') %}
+            {% set cheapest_three = sorted_items[:3] %}
+            
+            {% set result = [] %}
+            {% for item in cheapest_three %}
+              {% set hour = item.datetime[11:13] | int %}
+              {% set price = (item.electricity_price | float) / 1000000 %}
+              {% set hour_str = "%02d:00 (€%.4f)" | format(hour, price) %}
+              {% set result = result + [hour_str] %}
+            {% endfor %}
+            
+            {{ result | join(', ') }}
+          {% else %}
+            Onvoldoende data voor vandaag
+          {% endif %}
+        {% else %}
+          Geen forecast data
+        {% endif %}
+
+    - name: "Goedkoopste Uur Morgen (v3)"
+      unique_id: goedkoopste_uur_morgen_v3_clean
+      icon: mdi:clock-time-three-outline
+      state: >
+        {% set forecast = state_attr('sensor.zonneplan_current_electricity_tariff', 'forecast') %}
+        {% if forecast and forecast|length > 0 %}
+          {% set tomorrow = (now().date() + timedelta(days=1)).isoformat() %}
+          {% set tomorrow_items = forecast | selectattr('datetime', 'match', tomorrow + 'T.*') | list %}
+          
+          {% if tomorrow_items|length > 0 %}
+            {% set min_item = tomorrow_items | min(attribute='electricity_price') %}
+            {% set hour = min_item.datetime[11:13] | int %}
+            {% set price = (min_item.electricity_price | float) / 1000000 %}
+            {{ hour }}:00 - {{ hour + 1 }}:00 (€{{ "%.4f"|format(price) }}/kWh)
+          {% else %}
+            Geen data voor morgen
+          {% endif %}
+        {% else %}
+          Geen forecast data
+        {% endif %}
+
+    - name: "Goedkoopste 3 Uren Morgen (v3)"
+      unique_id: goedkoopste_3_uren_morgen_v3_clean
+      icon: mdi:clock-time-three-outline
+      state: >
+        {% set forecast = state_attr('sensor.zonneplan_current_electricity_tariff', 'forecast') %}
+        {% if forecast and forecast|length > 0 %}
+          {% set tomorrow = (now().date() + timedelta(days=1)).isoformat() %}
+          {% set tomorrow_items = forecast | selectattr('datetime', 'match', tomorrow + 'T.*') | list %}
+          
+          {% if tomorrow_items|length >= 3 %}
+            {% set sorted_items = tomorrow_items | sort(attribute='electricity_price') %}
+            {% set cheapest_three = sorted_items[:3] %}
+            
+            {% set result = [] %}
+            {% for item in cheapest_three %}
+              {% set hour = item.datetime[11:13] | int %}
+              {% set price = (item.electricity_price | float) / 1000000 %}
+              {% set hour_str = "%02d:00 (€%.4f)" | format(hour, price) %}
+              {% set result = result + [hour_str] %}
+            {% endfor %}
+            
+            {{ result | join(', ') }}
+          {% else %}
+            Onvoldoende data voor morgen
+          {% endif %}
+        {% else %}
+          Geen forecast data
+        {% endif %}
+      attributes:
+        gunstige_uren: >
+          {% set forecast = state_attr('sensor.zonneplan_current_electricity_tariff', 'forecast') %}
+          {% if forecast and forecast|length > 0 %}
+            {% set tomorrow = (now().date() + timedelta(days=1)).isoformat() %}
+            {% set tomorrow_items = forecast | selectattr('datetime', 'match', tomorrow + 'T.*') | list %}
+            {% if tomorrow_items|length > 0 %}
+              {% set avg_price = tomorrow_items|sum(attribute='electricity_price') / tomorrow_items|length %}
+              {% set threshold = avg_price * 0.85 %}
+              {% set cheap_hours = [] %}
+              
+              {% for hour in range(0, tomorrow_items|length) %}
+                {% if tomorrow_items[hour].electricity_price < threshold %}
+                  {% set cheap_hours = cheap_hours + [hour] %}
+                {% endif %}
+              {% endfor %}
+              
+              {% if cheap_hours|length > 0 %}
+                {% set hour_blocks = [] %}
+                {% set current_block = [cheap_hours[0]] %}
+                
+                {% for i in range(1, cheap_hours|length) %}
+                  {% if cheap_hours[i] == cheap_hours[i-1] + 1 %}
+                    {% set current_block = current_block + [cheap_hours[i]] %}
+                  {% else %}
+                    {% set hour_blocks = hour_blocks + [current_block] %}
+                    {% set current_block = [cheap_hours[i]] %}
+                  {% endif %}
+                {% endfor %}
+                
+                {% set hour_blocks = hour_blocks + [current_block] %}
+                {% set result = [] %}
+                
+                {% for block in hour_blocks %}
+                  {% if block|length == 1 %}
+                    {% set result = result + ["%02d:00" | format(block[0])] %}
+                  {% else %}
+                    {% set result = result + ["%02d:00-%02d:00" | format(block[0], block[-1] + 1)] %}
+                  {% endif %}
+                {% endfor %}
+                
+                {{ result|join(", ") }}
+              {% else %}
+                "Geen gunstige uren gevonden"
+              {% endif %}
+            {% else %}
+              "Geen prijsdata beschikbaar"
+            {% endif %}
+          {% else %}
+            "Geen forecast"
+          {% endif %}
+
+    - name: "Zonneplan Test (v3)"
+      unique_id: zonneplan_test_v3_clean
+      icon: mdi:test-tube
+      state: >
+        {% set forecast = state_attr('sensor.zonneplan_current_electricity_tariff', 'forecast') %}
+        {% if forecast %}
+          {{ forecast | length }} forecast items
+        {% else %}
+          Geen forecast
+        {% endif %}
