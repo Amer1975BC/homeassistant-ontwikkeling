@@ -60,6 +60,8 @@ lovelace:
       type: module
     - url: /local/community/ha-sankey-chart/ha-sankey-chart.js
       type: module
+    - url: /local/custom_lovelace/html_card/html-card.js
+      type: js
   
 
 # MQTT configuratie

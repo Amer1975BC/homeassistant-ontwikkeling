@@ -1,0 +1,65 @@
+
+  - sensor:
+      # Jaarlijkse elektriciteitskosten - gebaseerd op werkelijke dagelijkse kosten
+      - name: "Yearly Electricity Cost Projection"
+        unique_id: yearly_electricity_cost_projection
+        unit_of_measurement: "€"
+        icon: "mdi:flash"
+        device_class: "monetary"
+        state: >
+          {% set daily_cost = states('sensor.kosten_stroom_vandaag') | float(0) %}
+          {{ (daily_cost * 365) | round(2) }}
+        attributes:
+          based_on: "Werkelijke dagelijkse kosten"
+          daily_cost: "{{ states('sensor.kosten_stroom_vandaag') }}€"
+          calculation: "€{{ states('sensor.kosten_stroom_vandaag') }} × 365 dagen"
+          
+      # Jaarlijkse gaskosten - gebaseerd op werkelijke maandelijkse kosten  
+      - name: "Yearly Gas Cost Projection"
+        unique_id: yearly_gas_cost_projection
+        unit_of_measurement: "€"
+        icon: "mdi:fire"
+        device_class: "monetary"
+        state: >
+          {% set monthly_cost = states('sensor.monthly_gas_cost') | float(0) %}
+          {{ (monthly_cost * 12) | round(2) }}
+        attributes:
+          based_on: "Werkelijke maandelijkse gaskosten"
+          monthly_cost: "{{ states('sensor.monthly_gas_cost') }}€"
+          calculation: "€{{ states('sensor.monthly_gas_cost') }} × 12 maanden"
+          
+      # Jaarlijkse zonnepanelen besparing - gebaseerd op werkelijk verbruik × werkelijke prijs
+      - name: "Yearly Energy Savings Projection"
+        unique_id: yearly_energy_savings_projection
+        unit_of_measurement: "€"
+        icon: "mdi:solar-power"
+        device_class: "monetary"
+        state: >
+          {% set solar_kwh_today = states('sensor.zonnestroom_direct_verbruikt_vandaag') | float(0) %}
+          {% set current_price = states('sensor.stroomprijs_gemiddeld_vandaag') | float(0) %}
+          {% set daily_savings = solar_kwh_today * current_price %}
+          {{ (daily_savings * 365) | round(2) }}
+        attributes:
+          based_on: "Werkelijke zonnestroom × werkelijke stroomprijs"
+          daily_solar_kwh: "{{ states('sensor.zonnestroom_direct_verbruikt_vandaag') }} kWh"
+          current_price: "{{ states('sensor.stroomprijs_gemiddeld_vandaag') }}€/kWh"
+          daily_savings: "{{ (states('sensor.zonnestroom_direct_verbruikt_vandaag') | float(0) * states('sensor.stroomprijs_gemiddeld_vandaag') | float(0)) | round(2) }}€"
+          calculation: "{{ states('sensor.zonnestroom_direct_verbruikt_vandaag') }}kWh × €{{ states('sensor.stroomprijs_gemiddeld_vandaag') }} × 365 dagen"
+          
+      # Netto jaarlijkse energiekosten - elektriciteit + gas - zonnebesparing
+      - name: "Yearly Energy Cost Net Projection"
+        unique_id: yearly_energy_cost_net_projection
+        unit_of_measurement: "€"
+        icon: "mdi:currency-eur"
+        device_class: "monetary"
+        state: >
+          {% set electricity = states('sensor.yearly_electricity_cost_projection') | float(0) %}
+          {% set gas = states('sensor.yearly_gas_cost_projection') | float(0) %}
+          {% set savings = states('sensor.yearly_energy_savings_projection') | float(0) %}
+          {{ ((electricity + gas) - savings) | round(2) }}
+        attributes:
+          based_on: "Werkelijke gemeten waarden"
+          electricity_cost: "{{ states('sensor.yearly_electricity_cost_projection') }}€"
+          gas_cost: "{{ states('sensor.yearly_gas_cost_projection') }}€"  
+          solar_savings: "-{{ states('sensor.yearly_energy_savings_projection') }}€"
+          calculation: "({{ states('sensor.yearly_electricity_cost_projection') }}€ + {{ states('sensor.yearly_gas_cost_projection') }}€) - {{ states('sensor.yearly_energy_savings_projection') }}€"

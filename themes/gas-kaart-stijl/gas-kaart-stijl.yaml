@@ -1,0 +1,35 @@
+gaskaart_stijl:
+  card-mod-theme: gaskaart_stijl
+  card-mod-root: |
+    ha-card {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+      border-radius: 20px !important;
+      color: white !important;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3) !important;
+      border: none !important;
+      overflow: hidden !important;
+      --card-mod-icon-color: white !important;
+      --paper-item-icon-color: white !important;
+    }
+    .card-header {
+      color: white !important;
+      font-size: 22px !important;
+      font-weight: 300 !important;
+      text-shadow: 0 2px 4px rgba(0,0,0,0.3) !important;
+      text-align: center !important;
+      padding: 20px 16px 10px 16px !important;
+      background: rgba(255,255,255,0.1) !important;
+      margin: 0 !important;
+    }
+    .card-content {
+      padding: 0 !important;
+    }
+  card-mod-row: |
+    hui-generic-entity-row {
+      background: rgba(255,255,255,0.08) !important;
+      border-radius: 12px !important;
+      margin: 8px 12px !important;
+      padding: 12px !important;
+      backdrop-filter: blur(8px) !important;
+      border: 1px solid rgba(255,255,255,0.15) !important;
+    }
