@@ -1,0 +1,30 @@
+ - sensor:
+      - name: "Elektriciteit Totaal Vandaag"
+        unit_of_measurement: "kWh"
+        state: >
+          {{
+            (states('sensor.zonnestroom_direct_verbruikt_vandaag_dashboard') | float(0)) +
+            (states('sensor.batterij_naar_huis_vandaag') | float(0)) +
+            (states('sensor.netstroom_verbruikt_vandaag') | float(0))
+          }}
+      
+      - name: "Direct Zon Percentage"
+        unit_of_measurement: "%"
+        state: >
+          {% set totaal = states('sensor.elektriciteit_totaal_vandaag') | float(1) %}
+          {% set zon = states('sensor.zonnestroom_direct_verbruikt_vandaag_dashboard') | float(0) %}
+          {{ ((zon / totaal) * 100) | round(1) }}
+      
+      - name: "Batterij Percentage"
+        unit_of_measurement: "%"
+        state: >
+          {% set totaal = states('sensor.elektriciteit_totaal_vandaag') | float(1) %}
+          {% set batterij = states('sensor.batterij_naar_huis_vandaag') | float(0) %}
+          {{ ((batterij / totaal) * 100) | round(1) }}
+      
+      - name: "Net Percentage"
+        unit_of_measurement: "%"
+        state: >
+          {% set totaal = states('sensor.elektriciteit_totaal_vandaag') | float(1) %}
+          {% set net = states('sensor.netstroom_verbruikt_vandaag') | float(0) %}
+          {{ ((net / totaal) * 100) | round(1) }}

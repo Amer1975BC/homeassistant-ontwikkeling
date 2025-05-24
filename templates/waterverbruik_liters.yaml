@@ -1,0 +1,8 @@
+  - sensor:
+      - name: "Water Dagelijks Verbruik Liters"
+        unit_of_measurement: "L"
+        state_class: measurement
+        device_class: water
+        icon: mdi:water
+        state: >
+          {{ (states('sensor.water_dagelijks_verbruik')|float(0) * 1000)|round(1) }}

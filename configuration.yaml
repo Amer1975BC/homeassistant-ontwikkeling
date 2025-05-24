@@ -300,6 +300,49 @@ utility_meter:
     source: sensor.zonneplan_electricity_consumption_today  # ← vervang dit met jouw kWh-bronsensor
     cycle: daily
     name: "Dagelijks Totaal Verbruik"
+  elektriciteit_leveringskosten_maandelijks:
+    source: sensor.zonneplan_electricity_delivery_costs_today
+    cycle: monthly
+    name: "Elektriciteit Leveringskosten Maandelijks"
+    
+  elektriciteit_productiekosten_maandelijks:
+    source: sensor.zonneplan_electricity_production_costs_today  
+    cycle: monthly
+    name: "Elektriciteit Productiekosten Maandelijks"
+    
+  # Gaskosten per maand
+  gas_leveringskosten_maandelijks:
+    source: sensor.zonneplan_gas_delivery_costs_today
+    cycle: monthly
+    name: "Gas Leveringskosten Maandelijks"
+    
+  # Extra verbruik tracking voor beter overzicht
+  elektriciteit_verbruik_maandelijks:
+    source: sensor.zonneplan_electricity_consumption_today
+    cycle: monthly
+    name: "Elektriciteit Verbruik Maandelijks"
+    
+  elektriciteit_teruglevering_maandelijks:
+    source: sensor.zonneplan_electricity_returned_today
+    cycle: monthly
+    name: "Elektriciteit Teruglevering Maandelijks"
+    
+  gas_verbruik_maandelijks:
+    source: sensor.zonneplan_gas_consumption_today
+    cycle: monthly
+    name: "Gas Verbruik Maandelijks"
+    
+  # Optioneel: Wekelijkse tracking voor trends
+  elektriciteit_leveringskosten_wekelijks:
+    source: sensor.zonneplan_electricity_delivery_costs_today
+    cycle: weekly
+    name: "Elektriciteit Leveringskosten Wekelijks"
+    
+  gas_leveringskosten_wekelijks:
+    source: sensor.zonneplan_gas_delivery_costs_today
+    cycle: weekly
+    name: "Gas Leveringskosten Wekelijks"
+
 
 
 # Recorder en historie configuratie

@@ -1,0 +1,81 @@
+- sensor:
+    name: "Monthly Electricity Cost"
+    unit_of_measurement: "€"
+    icon: mdi:flash
+    state: >
+      {% set delivery_cost = states('sensor.elektriciteit_leveringskosten_maandelijks')|float(0) %}
+      {% set production_revenue = states('sensor.elektriciteit_productiekosten_maandelijks')|float(0) %}
+      {% set vastrecht = 10.50 %}
+      {% set totaal = delivery_cost - production_revenue + vastrecht %}
+      {{ totaal|round(2) }}
+    attributes:
+      delivery_cost_month: "{{ states('sensor.elektriciteit_leveringskosten_maandelijks')|float(0)|round(2) }}"
+      production_revenue_month: "{{ states('sensor.elektriciteit_productiekosten_maandelijks')|float(0)|round(2) }}"
+      consumption_month_kwh: "{{ states('sensor.elektriciteit_verbruik_maandelijks')|float(0)|round(1) }}"
+      returned_month_kwh: "{{ states('sensor.elektriciteit_teruglevering_maandelijks')|float(0)|round(1) }}"
+      vastrecht: "10.50"
+
+# Gaskosten (nu met utility meters)
+- sensor:
+    name: "Monthly Gas Cost"
+    unit_of_measurement: "€"
+    icon: mdi:fire
+    state: >
+      {% set gas_cost = states('sensor.gas_leveringskosten_maandelijks')|float(0) %}
+      {% set vastrecht = 6.25 %}
+      {{ (gas_cost + vastrecht)|round(2) }}
+    attributes:
+      gas_cost_month: "{{ states('sensor.gas_leveringskosten_maandelijks')|float(0)|round(2) }}"
+      consumption_month_m3: "{{ states('sensor.gas_verbruik_maandelijks')|float(0)|round(3) }}"
+      vastrecht: "6.25"
+      leverancier: "Zonneplan"
+      berekening: "{{ states('sensor.gas_leveringskosten_maandelijks')|float(0)|round(2) }} + €6.25 vastrecht"
+
+# Waterkosten
+- sensor:
+    name: "Monthly Water Cost"
+    unit_of_measurement: "€"
+    icon: mdi:water
+    state: >
+      {% set verbruik_m3 = states('sensor.water_maandelijks_verbruik')|float(0) %}
+      {% set tarief_water = 2.62 %}
+      {% set vastrecht_water = 12.00 %}
+      {% set totaal = (verbruik_m3 * tarief_water) + vastrecht_water %}
+      {{ totaal|round(2) }}
+    attributes:
+      verbruik_m3: "{{ states('sensor.water_maandelijks_verbruik')|float(0)|round(1) }}"
+      tarief_per_m3: "2.62"
+      vastrecht: "12.00"
+      kosten_verbruik: "{{ (states('sensor.water_maandelijks_verbruik')|float(0) * 2.62)|round(2) }}"
+      berekening: "{{ states('sensor.water_maandelijks_verbruik')|float(0) }} m³ × €2.62 + €12.00 vastrecht"
+
+
+# Energiebesparing
+- sensor:
+    name: "Monthly Energy Savings"
+    unit_of_measurement: "€"
+    icon: mdi:solar-power
+    state: >
+      {% set production_revenue = states('sensor.elektriciteit_productiekosten_maandelijks')|float(0) %}
+      {{ production_revenue|round(2) }}
+    attributes:
+      production_revenue_month: "{{ states('sensor.elektriciteit_productiekosten_maandelijks')|float(0)|round(2) }}"
+      returned_month_kwh: "{{ states('sensor.elektriciteit_teruglevering_maandelijks')|float(0)|round(1) }}"
+
+# Netto energiekosten
+- sensor:
+    name: "Monthly Energy Cost Net"
+    unit_of_measurement: "€"
+    icon: mdi:currency-eur
+    state: >
+      {% set elektriciteit = states('sensor.monthly_electricity_cost')|float(0) %}
+      {% set gas = states('sensor.monthly_gas_cost')|float(0) %}
+      {% set water = states('sensor.monthly_water_cost')|float(0) %}
+      {% set besparing = states('sensor.monthly_energy_savings')|float(0) %}
+      {% set totaal = elektriciteit + gas + water - besparing %}
+      {{ totaal|round(2) }}
+    attributes:
+      elektriciteit: "{{ states('sensor.monthly_electricity_cost')|float(0)|round(2) }}"
+      gas: "{{ states('sensor.monthly_gas_cost')|float(0)|round(2) }}"
+      water: "{{ states('sensor.monthly_water_cost')|float(0)|round(2) }}"
+      besparing: "{{ states('sensor.monthly_energy_savings')|float(0)|round(2) }}"
