@@ -11,7 +11,7 @@
           {% if today_items|length > 0 %}
             {% set min_item = today_items | min(attribute='electricity_price') %}
             {% set hour = min_item.datetime[11:13] | int %}
-            {% set price = (min_item.electricity_price | float) / 1000000 %}
+            {% set price = (min_item.electricity_price | float) / 10 %}
             {{ hour }}:00 - {{ hour + 1 }}:00 (€{{ "%.4f"|format(price) }}/kWh)
           {% else %}
             Geen data voor vandaag
@@ -27,7 +27,7 @@
             {% set today_items = forecast | selectattr('datetime', 'match', today + 'T.*') | list %}
             {% if today_items|length > 0 %}
               {% set min_price = (today_items | min(attribute='electricity_price')).electricity_price %}
-              {{ (min_price | float) / 1000000 | round(4) }}
+              {{ (min_price | float) / 10| round(4) }}
             {% else %}
               null
             {% endif %}
@@ -65,7 +65,7 @@
             {% set result = [] %}
             {% for item in cheapest_three %}
               {% set hour = item.datetime[11:13] | int %}
-              {% set price = (item.electricity_price | float) / 1000000 %}
+              {% set price = (item.electricity_price | float) / 10 %}
               {% set hour_str = "%02d:00 (€%.4f)" | format(hour, price) %}
               {% set result = result + [hour_str] %}
             {% endfor %}
@@ -90,7 +90,7 @@
           {% if tomorrow_items|length > 0 %}
             {% set min_item = tomorrow_items | min(attribute='electricity_price') %}
             {% set hour = min_item.datetime[11:13] | int %}
-            {% set price = (min_item.electricity_price | float) / 1000000 %}
+            {% set price = (min_item.electricity_price | float) / 10 %}
             {{ hour }}:00 - {{ hour + 1 }}:00 (€{{ "%.4f"|format(price) }}/kWh)
           {% else %}
             Geen data voor morgen
